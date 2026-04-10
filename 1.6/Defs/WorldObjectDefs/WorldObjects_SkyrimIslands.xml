@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <WorldObjectDef ParentName="ClaimableSpace">
+    <defName>SkyrimIslands_SkyIslandWorldObject</defName>
+    <label>sky island</label>
+    <description>A floating colony platform anchored high above the planet.</description>
+    <worldObjectClass>SkyrimIslands.World.SkyIslandMapParent</worldObjectClass>
+    <expandingIconTexture>World/WorldObjects/Expanding/SettlementPlatform</expandingIconTexture>
+    <expandingIconColor>(255,255,255,255)</expandingIconColor>
+    <overrideMapSize>(250,1,250)</overrideMapSize>
+    <mapGenerator>SkyrimIslands_SkyIslandMapGenerator</mapGenerator>
+  </WorldObjectDef>
+
+</Defs>

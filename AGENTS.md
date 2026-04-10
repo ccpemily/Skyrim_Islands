@@ -25,3 +25,20 @@
 
 ## 配置提示
 工程引用默认指向 `..\..\RimWorldWin64_Data\Managed\`。如果本地无法构建，请先确认开发副本路径没有变化，再考虑调整项目引用。
+
+## Agent 说明
+查看 RimWorld 源码时，优先使用 `rimsearcher MCP` 进行检索、定位和阅读；不要默认改用普通文件搜索，除非 `rimsearcher MCP` 当前不可用。
+
+修改 Def 或新增代码后，应检查 XML 与 C# 的交叉引用是否一致，包括：
+- `defName` 与 `DefOf` 字段名是否一致
+- XML 中引用的 `Class`、`worldObjectClass`、`workerClass`、`compClass`、`layerType` 等类型名是否存在
+- C# 中通过 `DefOf`、`DefDatabase`、字符串或反射引用的 Def 名称是否与 XML 一致
+
+对 XML 本身的改动，还应额外检查 XML 之间的引用是否正确，包括：
+- `ParentName`、`MayRequire`、`Name` 是否有效
+- 各类 Def 节点中引用的其他 `defName` 是否存在，例如 `mapGenerator`、`terrain`、`biome`、`thingDef`、`worldObjectDef`、`researchPrerequisites`、`terrainAffordanceNeeded`
+- 新增 Def 是否放在合适目录，并与 `LoadFolders.xml`、版本目录结构保持一致
+
+XML 中如果引用 C# 类型，遵循以下规则：
+- 原版 RimWorld / Verse / DLC 已有类型，可直接使用类名，不必写限定名
+- Mod 自己实现的类型，必须使用全限定名，例如 `SkyrimIslands.World.SkyIslandMapParent`

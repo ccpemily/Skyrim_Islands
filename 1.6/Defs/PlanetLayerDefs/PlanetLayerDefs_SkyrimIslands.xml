@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <PlanetLayerDef Name="SkyrimIslands_SkyLayerBase" Abstract="True">
+    <layerType>OrbitLayer</layerType>
+    <elevationString>40km</elevationString>
+    <defaultBiome>SkyrimIslands_SkyBiome</defaultBiome>
+    <defaultMapWorldObject>SkyrimIslands_SkyIslandWorldObject</defaultMapWorldObject>
+    <alwaysRaycastable>false</alwaysRaycastable>
+    <obstructsExpandingIcons>false</obstructsExpandingIcons>
+    <onlyAllowWhitelistedIncidents>true</onlyAllowWhitelistedIncidents>
+    <onlyAllowWhitelistedGameConditions>true</onlyAllowWhitelistedGameConditions>
+    <onlyAllowWhitelistedArrivals>true</onlyAllowWhitelistedArrivals>
+    <onlyAllowWhitelistedArrivalModes>true</onlyAllowWhitelistedArrivalModes>
+    <viewGizmoTexPath>UI/Commands/ViewOrbit</viewGizmoTexPath>
+    <viewGizmoTooltip>View floating sky islands above the planet.</viewGizmoTooltip>
+    <canFormCaravans>false</canFormCaravans>
+    <isSpace>true</isSpace>
+    <ignoreNoBuildArea>true</ignoreNoBuildArea>
+    <settlementsPer100kTiles>250~250</settlementsPer100kTiles>
+    <viewAngleSettlementsFactorCurve>
+      <points>
+        <li>(0, 1)</li>
+        <li>(0.3, 1)</li>
+        <li>(0.5, 0.75)</li>
+        <li>(1, 0.5)</li>
+      </points>
+    </viewAngleSettlementsFactorCurve>
+    <settlementWorldObjectDef>SkyrimIslands_SkyIslandWorldObject</settlementWorldObjectDef>
+    <destroyedSettlementWorldObjectDef>DestroyedSpaceSettlement</destroyedSettlementWorldObjectDef>
+    <raidPointsFactor>0.8</raidPointsFactor>
+    <lineWidthFactor>7.5</lineWidthFactor>
+    <gerundLabel>in</gerundLabel>
+    <worldGenSteps>
+      <li>Tiles</li>
+      <li>Factions</li>
+    </worldGenSteps>
+    <worldDrawLayers>
+      <li>SkyrimIslands.World.WorldDrawLayer_SkyIslandClouds</li>
+      <li>WorldDrawLayer_ClosestTile</li>
+    </worldDrawLayers>
+    <worldTabs>
+      <li>WITab_Orbit</li>
+      <li>WITab_Planet</li>
+    </worldTabs>
+  </PlanetLayerDef>
+
+  <PlanetLayerDef ParentName="SkyrimIslands_SkyLayerBase">
+    <defName>SkyrimIslands_SkyLayer</defName>
+    <label>sky</label>
+  </PlanetLayerDef>
+
+</Defs>

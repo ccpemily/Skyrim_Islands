@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <BiomeDef>
+    <defName>SkyrimIslands_SkyBiome</defName>
+    <label>sky island</label>
+    <description>An artificial island floating high above the planet, surrounded by a dense sea of clouds.</description>
+    <workerClass>SkyrimIslands.World.BiomeWorker_SkyIsland</workerClass>
+    <generatesNaturally>false</generatesNaturally>
+    <canBuildBase>true</canBuildBase>
+    <canAutoChoose>false</canAutoChoose>
+    <animalDensity>0.2</animalDensity>
+    <plantDensity>0.15</plantDensity>
+    <movementDifficulty>1</movementDifficulty>
+    <texture>World/Biomes/Grasslands</texture>
+    <allowRoads>false</allowRoads>
+    <allowRivers>false</allowRivers>
+    <allowFarmingCamps>false</allowFarmingCamps>
+    <hasVirtualPlants>false</hasVirtualPlants>
+    <wildAnimalsCanWanderInto>false</wildAnimalsCanWanderInto>
+    <hasBedrock>false</hasBedrock>
+    <noAmbientWind>false</noAmbientWind>
+    <inVacuum>false</inVacuum>
+    <constantOutdoorTemperature>7</constantOutdoorTemperature>
+    <maxFishPopulation>420</maxFishPopulation>
+    <fishTypes>
+      <freshwater_Common>
+        <Fish_Bass>1</Fish_Bass>
+      </freshwater_Common>
+      <freshwater_Uncommon>
+        <Fish_Catfish>1</Fish_Catfish>
+      </freshwater_Uncommon>
+      <rareCatchesSetMaker>RareFishingCatches_Temperate</rareCatchesSetMaker>
+    </fishTypes>
+    <baseWeatherCommonalities>
+      <SkyrimIslands_Clear>18</SkyrimIslands_Clear>
+      <SkyrimIslands_Windy>4</SkyrimIslands_Windy>
+    </baseWeatherCommonalities>
+    <diseaseMtbDays>80</diseaseMtbDays>
+    <soundsAmbient>
+      <li>Ambient_SpaceMap</li>
+    </soundsAmbient>
+  </BiomeDef>
+
+</Defs>

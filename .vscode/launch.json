@@ -5,7 +5,7 @@
       "name": "Launch RimWorld",
       "type": "node-terminal",
       "request": "launch",
-      "command": "powershell -NoProfile -Command \"$process = Get-Process RimWorldWin64 -ErrorAction SilentlyContinue; if (-not $process) { Start-Process -FilePath '${workspaceFolder}\\..\\..\\RimWorldWin64.exe' -WorkingDirectory '${workspaceFolder}\\..\\..' }\"",
+      "command": "powershell -NoProfile -Command \"`$process = Get-Process RimWorldWin64 -ErrorAction SilentlyContinue; if (-not `$process) { Start-Process -FilePath '${workspaceFolder}\\..\\..\\RimWorldWin64.exe' -WorkingDirectory '${workspaceFolder}\\..\\..' | Out-Null }\"",
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "build mod"
     }

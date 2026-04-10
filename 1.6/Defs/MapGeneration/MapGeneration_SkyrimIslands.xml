@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <MapGeneratorDef>
+    <defName>SkyrimIslands_SkyIslandMapGenerator</defName>
+    <label>sky island</label>
+    <ignoreAreaRevealedLetter>true</ignoreAreaRevealedLetter>
+    <disableCallAid>true</disableCallAid>
+    <renderWorld>true</renderWorld>
+    <disableMapClippers>true</disableMapClippers>
+    <defaultUnderGridTerrain>SkyrimIslands_CloudSea</defaultUnderGridTerrain>
+    <genSteps>
+      <li>SkyrimIslands_SkyIslandBase</li>
+      <li>SkyrimIslands_SkyIslandCore</li>
+      <li>FogSpace</li>
+    </genSteps>
+  </MapGeneratorDef>
+
+  <GenStepDef>
+    <defName>SkyrimIslands_SkyIslandBase</defName>
+    <order>100</order>
+    <genStep Class="SkyrimIslands.MapGen.GenStep_SkyIslandBase" />
+  </GenStepDef>
+
+  <GenStepDef>
+    <defName>SkyrimIslands_SkyIslandCore</defName>
+    <order>200</order>
+    <genStep Class="SkyrimIslands.MapGen.GenStep_SkyIslandCore" />
+  </GenStepDef>
+
+</Defs>
