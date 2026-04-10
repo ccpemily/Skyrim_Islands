@@ -1,0 +1,71 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "restore packages",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "restore",
+        "${workspaceFolder}/Skyrim_Islands.csproj"
+      ],
+      "options": {
+        "env": {
+          "DOTNET_CLI_HOME": "${workspaceFolder}",
+          "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+          "NUGET_PACKAGES": "${workspaceFolder}/.nuget/packages"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build mod",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/Skyrim_Islands.csproj",
+        "-c",
+        "Debug",
+        "--no-restore"
+      ],
+      "dependsOn": "restore packages",
+      "options": {
+        "env": {
+          "DOTNET_CLI_HOME": "${workspaceFolder}",
+          "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+          "NUGET_PACKAGES": "${workspaceFolder}/.nuget/packages"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "launch RimWorld",
+      "type": "process",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$process = Get-Process RimWorldWin64 -ErrorAction SilentlyContinue; if (-not $process) { Start-Process -FilePath '${workspaceFolder}\\..\\..\\RimWorldWin64.exe' -WorkingDirectory '${workspaceFolder}\\..\\..' | Out-Null }"
+      ],
+      "dependsOn": "build mod",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "dotnet.defaultSolution": "Skyrim_Islands.csproj",
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true
+  },
+  "omnisharp.enableEditorConfigSupport": true
+}

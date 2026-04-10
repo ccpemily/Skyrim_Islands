@@ -1,0 +1,8 @@
+bin/
+obj/
+.nuget/
+.vs/
+.dotnet/
+.vscode/*.log
+1.6/Assemblies/*
+!1.6/Assemblies/Skyrim_Islands.dll
