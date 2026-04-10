@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using RimWorld.Planet;
@@ -8,7 +7,10 @@ namespace SkyrimIslands.World
 {
     public class GameComponent_SkyIslandFlow : GameComponent
     {
-        private bool initializedStartingSkyIsland;
+        private const string MigrationQuestTag = "SkyrimIslandsMigrationQuest";
+        private static bool startupPromptQueuedThisSession;
+
+        private bool startupPromptSent;
 
         public GameComponent_SkyIslandFlow(Game game)
         {
@@ -17,84 +19,77 @@ namespace SkyrimIslands.World
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Values.Look(ref initializedStartingSkyIsland, "initializedStartingSkyIsland", false);
+            Scribe_Values.Look(ref startupPromptSent, "startupPromptSent", false);
         }
 
         public override void StartedNewGame()
         {
             base.StartedNewGame();
 
-            if (initializedStartingSkyIsland || !ModsConfig.OdysseyActive)
+            if (startupPromptSent || startupPromptQueuedThisSession || !ModsConfig.OdysseyActive)
             {
                 return;
             }
 
-            Map? sourceMap = Find.Maps.FirstOrDefault((Map map) => map.IsPlayerHome);
-            if (sourceMap == null)
-            {
-                Log.Warning("[Skyrim Islands] Could not find the starting home map.");
-                return;
-            }
-
-            initializedStartingSkyIsland = true;
-
-            WorldComponent_SkyIslands worldComponent = Find.World.GetComponent<WorldComponent_SkyIslands>();
-            SkyIslandMapParent island = worldComponent.EnsureStartingSkyIsland(sourceMap.Tile);
-            Map targetMap = GetOrGenerateMapUtility.GetOrGenerateMap(
-                island.Tile,
-                Find.World.info.initialMapSize,
-                SkyrimIslandsDefOf.SkyrimIslands_SkyIslandWorldObject);
-
-            island.Notify_MyMapSettled(targetMap);
-            MoveStartingPawns(sourceMap, targetMap);
-            MoveStartingItems(sourceMap, targetMap);
+            startupPromptSent = true;
+            startupPromptQueuedThisSession = true;
 
             LongEventHandler.ExecuteWhenFinished(delegate
             {
-                Current.Game.CurrentMap = targetMap;
+                Map? sourceMap = Find.Maps.FirstOrDefault((Map map) => map.IsPlayerHome);
+                if (sourceMap == null)
+                {
+                    Log.Warning("[Skyrim Islands] Could not find the starting home map.");
+                    return;
+                }
+
+                if (Find.QuestManager.QuestsListForReading.Any((Quest quest) => quest.tags.Contains(MigrationQuestTag)))
+                {
+                    return;
+                }
+
+                Quest quest2 = Quest.MakeRaw();
+                quest2.root = SkyrimIslandsDefOf.SkyrimIslands_MigrationQuest;
+                quest2.name = "空岛启程";
+                quest2.description = "调查迫降的未知穿梭机，选择同行的殖民者、机械族与物资，随后前往云层上方建立空岛殖民地。";
+                quest2.acceptanceExpireTick = Find.TickManager.TicksGame + 15 * 60000;
+                quest2.tags.Add(MigrationQuestTag);
+
+                QuestPart_SkyIslandMigration mission = quest2.AddPart<QuestPart_SkyIslandMigration>();
+                mission.inSignalEnable = quest2.InitiateSignal;
+                mission.sourceMap = sourceMap;
+                mission.landingCell = DropCellFinder.GetBestShuttleLandingSpot(sourceMap, Faction.OfPlayer);
+                mission.signalListenMode = QuestPart.SignalListenMode.OngoingOnly;
+
                 Find.LetterStack.ReceiveLetter(
-                    "空岛已建立",
-                    "初始空岛已经在空岛专属图层生成。当前版本会先把起始殖民者与附近的开局物资转移到空岛，原始地表地图暂时保留，后续再接入完整的迁移任务流程。",
-                    LetterDefOf.PositiveEvent,
-                    new LookTargets(targetMap.Center, targetMap));
+                    "未知穿梭机信号",
+                    "殖民地附近侦测到一艘未知穿梭机的迫降信号。它的导航核心中残留着一组指向云层上方的坐标。你可以调查这艘穿梭机，并尝试启程前往空岛。",
+                    LetterDefOf.NeutralEvent,
+                    new LookTargets(mission.landingCell, sourceMap));
+
+                Find.QuestManager.Add(quest2);
             });
-
-            Log.Message("[Skyrim Islands] Starting sky island created.");
         }
 
-        private static void MoveStartingPawns(Map sourceMap, Map targetMap)
+        public override void GameComponentTick()
         {
-            List<Pawn> pawns = sourceMap.mapPawns.PawnsInFaction(Faction.OfPlayer)
-                .Where((Pawn pawn) => pawn.Spawned)
-                .ToList();
+            base.GameComponentTick();
 
-            IntVec3 anchor = targetMap.Center;
-            for (int i = 0; i < pawns.Count; i++)
+            if (!WorldRendererUtility.WorldBackgroundNow)
             {
-                Pawn pawn = pawns[i];
-                IntVec3 cell = CellFinder.RandomClosewalkCellNear(anchor, targetMap, 6);
-                pawn.DeSpawn();
-                GenSpawn.Spawn(pawn, cell, targetMap);
+                return;
             }
-        }
 
-        private static void MoveStartingItems(Map sourceMap, Map targetMap)
-        {
-            IntVec3 sourceAnchor = sourceMap.mapPawns.FreeColonistsSpawned.FirstOrDefault()?.Position ?? sourceMap.Center;
-            IntVec3 targetAnchor = targetMap.Center;
-
-            List<Thing> items = sourceMap.listerThings.AllThings
-                .Where((Thing thing) =>
-                    thing.Spawned &&
-                    thing.def.category == ThingCategory.Item &&
-                    thing.Position.InHorDistOf(sourceAnchor, 12f))
-                .ToList();
-
-            for (int i = 0; i < items.Count; i++)
+            Map? currentMap = Find.CurrentMap;
+            if (currentMap?.Parent is not SkyIslandMapParent)
             {
-                Thing thing = items[i];
-                thing.DeSpawn();
-                GenPlace.TryPlaceThing(thing, CellFinder.RandomClosewalkCellNear(targetAnchor, targetMap, 8), targetMap, ThingPlaceMode.Near);
+                return;
+            }
+
+            PlanetLayer? skyLayer = Find.WorldGrid.FirstLayerOfDef(SkyrimIslandsDefOf.SkyrimIslands_SkyLayer);
+            if (skyLayer != null && PlanetLayer.Selected != skyLayer)
+            {
+                PlanetLayer.Selected = skyLayer;
             }
         }
     }

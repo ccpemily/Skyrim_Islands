@@ -75,6 +75,36 @@ namespace SkyrimIslands.World
             return island;
         }
 
+        public SkyIslandMapParent CreateStartingSkyIslandAt(PlanetTile tile)
+        {
+            PlanetLayer skyLayer = EnsureSkyLayer();
+            if (tile.Layer != skyLayer)
+            {
+                tile = skyLayer.GetClosestTile_NewTemp(tile, true);
+            }
+
+            if (!IsTileUsable(tile))
+            {
+                throw new System.InvalidOperationException("The selected sky island tile is not usable.");
+            }
+
+            Find.WorldGrid[tile].PrimaryBiome = SkyrimIslandsDefOf.SkyrimIslands_SkyBiome;
+
+            SkyIslandMapParent island = (SkyIslandMapParent)WorldObjectMaker.MakeWorldObject(SkyrimIslandsDefOf.SkyrimIslands_SkyIslandWorldObject);
+            island.Tile = tile;
+            island.SetFaction(Faction.OfPlayer);
+            island.Name = "Sky Island";
+            Find.WorldObjects.Add(island);
+
+            startingSkyIsland = island;
+            return island;
+        }
+
+        public PlanetLayer GetOrCreateSkyLayer()
+        {
+            return EnsureSkyLayer();
+        }
+
         private static PlanetLayer EnsureSkyLayer()
         {
             PlanetLayer? existingLayer = Find.WorldGrid.FirstLayerOfDef(SkyrimIslandsDefOf.SkyrimIslands_SkyLayer);

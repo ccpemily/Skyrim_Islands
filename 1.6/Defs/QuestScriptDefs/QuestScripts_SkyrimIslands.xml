@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <QuestScriptDef>
+    <defName>SkyrimIslands_MigrationQuest</defName>
+    <label>空岛启程</label>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <autoAccept>false</autoAccept>
+    <hideOnCleanup>true</hideOnCleanup>
+    <questAvailableLetterLabel>空岛启程</questAvailableLetterLabel>
+    <questAvailableLetterTextIsDescription>true</questAvailableLetterTextIsDescription>
+    <sendAvailableLetter>false</sendAvailableLetter>
+    <endOnColonyMove>false</endOnColonyMove>
+    <root Class="QuestNode_Sequence" />
+  </QuestScriptDef>
+
+</Defs>

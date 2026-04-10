@@ -24,5 +24,7 @@ namespace SkyrimIslands
         public static BiomeDef SkyrimIslands_SkyBiome = null!;
 
         public static PlanetLayerDef SkyrimIslands_SkyLayer = null!;
+
+        public static QuestScriptDef SkyrimIslands_MigrationQuest = null!;
     }
 }
