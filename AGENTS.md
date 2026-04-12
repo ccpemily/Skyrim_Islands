@@ -16,6 +16,8 @@
 命名空间遵循当前项目约定：
 - `Source/` 根目录：`SkyrimIslands`
 - `Source/*` 子目录：`SkyrimIslands.*`
+- 新增任务时，任务主逻辑统一放在 `Source/Quests/$QUEST_NAME$/`，命名空间使用 `SkyrimIslands.Quests.$QUEST_NAME$`
+- 任务相关的专用物体、组件、命令、窗口等，统一放在 `Source/Quests/$QUEST_NAME$/$OBJECT_NAME$/`，命名空间使用 `SkyrimIslands.Quests.$QUEST_NAME$.$OBJECT_NAME$`
 
 ## 测试与验证
 仓库当前没有独立测试工程。提交前至少完成一次 Debug 构建，并在游戏内验证模组能正常加载。若改动涉及初始化、Harmony 补丁或游戏行为，请附上简短的人工验证说明，例如“进入主菜单后确认日志只输出一次初始化消息”。

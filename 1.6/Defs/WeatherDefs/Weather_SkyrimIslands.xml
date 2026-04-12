@@ -3,7 +3,7 @@
 
   <WeatherDef>
     <defName>SkyrimIslands_Clear</defName>
-    <label>clear sky</label>
+    <label>碧空</label>
     <description>A calm, high-altitude sky above the cloud layer.</description>
     <repeatable>true</repeatable>
     <favorability>Good</favorability>
@@ -39,7 +39,7 @@
 
   <WeatherDef>
     <defName>SkyrimIslands_Windy</defName>
-    <label>high-altitude wind</label>
+    <label>强风</label>
     <description>Strong and steady winds sweep above the cloud sea.</description>
     <repeatable>true</repeatable>
     <favorability>Neutral</favorability>

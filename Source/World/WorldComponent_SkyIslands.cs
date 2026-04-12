@@ -41,40 +41,6 @@ namespace SkyrimIslands.World
             EnsureSkyLayer();
         }
 
-        public SkyIslandMapParent EnsureStartingSkyIsland(PlanetTile surfaceTile)
-        {
-            PlanetLayer skyLayer = EnsureSkyLayer();
-            if (startingSkyIsland != null && !startingSkyIsland.Destroyed)
-            {
-                return startingSkyIsland;
-            }
-
-            PlanetTile targetTile = skyLayer.GetClosestTile_NewTemp(surfaceTile, true);
-            if (!IsTileUsable(targetTile) &&
-                !TileFinder.TryFindNewSiteTile(
-                    out targetTile,
-                    surfaceTile,
-                    minDist: 0,
-                    maxDist: 30,
-                    canBeSpace: true,
-                    layer: skyLayer,
-                    validator: IsTileUsable))
-            {
-                throw new System.InvalidOperationException("Failed to find an empty sky layer tile for the starting sky island.");
-            }
-
-            Find.WorldGrid[targetTile].PrimaryBiome = SkyrimIslandsDefOf.SkyrimIslands_SkyBiome;
-
-            SkyIslandMapParent island = (SkyIslandMapParent)WorldObjectMaker.MakeWorldObject(SkyrimIslandsDefOf.SkyrimIslands_SkyIslandWorldObject);
-            island.Tile = targetTile;
-            island.SetFaction(Faction.OfPlayer);
-            island.Name = "Sky Island";
-            Find.WorldObjects.Add(island);
-
-            startingSkyIsland = island;
-            return island;
-        }
-
         public SkyIslandMapParent CreateStartingSkyIslandAt(PlanetTile tile)
         {
             PlanetLayer skyLayer = EnsureSkyLayer();
@@ -93,7 +59,7 @@ namespace SkyrimIslands.World
             SkyIslandMapParent island = (SkyIslandMapParent)WorldObjectMaker.MakeWorldObject(SkyrimIslandsDefOf.SkyrimIslands_SkyIslandWorldObject);
             island.Tile = tile;
             island.SetFaction(Faction.OfPlayer);
-            island.Name = "Sky Island";
+            island.Name = "浮空岛";
             Find.WorldObjects.Add(island);
 
             startingSkyIsland = island;
@@ -111,6 +77,7 @@ namespace SkyrimIslands.World
             if (existingLayer != null)
             {
                 EnsureConnections(existingLayer);
+                EnsureZoomChain(existingLayer);
                 return existingLayer;
             }
 
@@ -132,10 +99,7 @@ namespace SkyrimIslands.World
             Find.WorldGrid.StandardizeTileData();
 
             EnsureConnections(layer);
-            if (surfaceLayer != null)
-            {
-                layer.zoomOutToLayer = surfaceLayer;
-            }
+            EnsureZoomChain(layer);
 
             return layer;
         }
@@ -149,6 +113,24 @@ namespace SkyrimIslands.World
             EnsureConnection(surfaceLayer, skyLayer);
             EnsureConnection(skyLayer, orbitLayer);
             EnsureConnection(orbitLayer, skyLayer);
+        }
+
+        private static void EnsureZoomChain(PlanetLayer skyLayer)
+        {
+            PlanetLayer? orbitLayer = Find.WorldGrid.FirstLayerOfDef(PlanetLayerDefOf.Orbit);
+            PlanetLayer? surfaceLayer = Find.WorldGrid.FirstLayerOfDef(PlanetLayerDefOf.Surface);
+
+            if (surfaceLayer != null)
+            {
+                surfaceLayer.zoomOutToLayer = skyLayer;
+                skyLayer.zoomInToLayer = surfaceLayer;
+            }
+
+            if (orbitLayer != null)
+            {
+                skyLayer.zoomOutToLayer = orbitLayer;
+                orbitLayer.zoomInToLayer = skyLayer;
+            }
         }
 
         private static void EnsureConnection(PlanetLayer? from, PlanetLayer? to)

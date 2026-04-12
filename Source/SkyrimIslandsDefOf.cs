@@ -26,5 +26,7 @@ namespace SkyrimIslands
         public static PlanetLayerDef SkyrimIslands_SkyLayer = null!;
 
         public static QuestScriptDef SkyrimIslands_MigrationQuest = null!;
+
+        public static ThingDef SkyrimIslands_MissionShuttle = null!;
     }
 }

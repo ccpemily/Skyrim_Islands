@@ -58,7 +58,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$process = Get-Process RimWorldWin64 -ErrorAction SilentlyContinue; if (-not $process) { Start-Process -FilePath '${workspaceFolder}\\..\\..\\RimWorldWin64.exe' -WorkingDirectory '${workspaceFolder}\\..\\..' | Out-Null }"
+        "$process = Get-Process RimWorldWin64 -ErrorAction SilentlyContinue | Select-Object -First 1; if ($process) { Wait-Process -Id $process.Id } else { $process = Start-Process -FilePath '${workspaceFolder}\\..\\..\\RimWorldWin64.exe' -WorkingDirectory '${workspaceFolder}\\..\\..' -PassThru; Wait-Process -Id $process.Id }"
       ],
       "dependsOn": "build mod",
       "presentation": {

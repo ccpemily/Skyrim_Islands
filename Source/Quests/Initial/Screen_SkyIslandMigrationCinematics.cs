@@ -3,7 +3,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 
-namespace SkyrimIslands.World
+namespace SkyrimIslands.Quests.Initial
 {
     public class Screen_SkyIslandMigrationCinematics : Window
     {
