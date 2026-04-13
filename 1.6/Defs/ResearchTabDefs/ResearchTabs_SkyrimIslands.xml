@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <ResearchTabDef>
+    <defName>SkyrimIslands_SkyResearchTab</defName>
+    <label>空岛科技</label>
+    <generalTitle>空岛专属科技</generalTitle>
+    <generalDescription>本页统一承载空岛专属科技，但按不同研究数据来源分为多条纵向泳道。\n\n上方泳道：尖塔研究数据\n中部泳道：云海研究数据\n下方泳道：节点观测数据\n\n当前示例骨架先接入尖塔路线，其他泳道保留给后续系统扩展。</generalDescription>
+    <visibleByDefault>true</visibleByDefault>
+  </ResearchTabDef>
+
+</Defs>

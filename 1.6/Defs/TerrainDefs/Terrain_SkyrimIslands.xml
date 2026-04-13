@@ -16,10 +16,8 @@
   <TerrainDef ParentName="PlatformBase">
     <defName>SkyrimIslands_IslandCore</defName>
     <label>空岛核心</label>
-    <texturePath>Terrain/Surfaces/SoilRich</texturePath>
-    <fertility>1.4</fertility>
-    <takeFootprints>true</takeFootprints>
-    <generatedFilth>Filth_Dirt</generatedFilth>
+    <texturePath>Terrain/Surfaces/MechanoidPlatform/MechanoidPlatform</texturePath>
+    <fertility>0</fertility>
     <statBases>
       <Beauty>0</Beauty>
       <BeautyOutdoors>0</BeautyOutdoors>
@@ -47,9 +45,10 @@
   <TerrainDef ParentName="PlatformBase">
     <defName>SkyrimIslands_FloatingPlatform</defName>
     <label>浮空石平台</label>
-    <texturePath>Terrain/Surfaces/GenericFloorTile</texturePath>
-    <color>(0.5, 0.5, 0.5)</color>
-    <fertility>0</fertility>
+    <texturePath>Terrain/Surfaces/SoilRich</texturePath>
+    <fertility>1.4</fertility>
+    <takeFootprints>true</takeFootprints>
+    <generatedFilth>Filth_Dirt</generatedFilth>
     <statBases>
       <Beauty>-1</Beauty>
       <Cleanliness>0</Cleanliness>

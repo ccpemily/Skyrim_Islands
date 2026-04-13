@@ -12,6 +12,7 @@
 
 - 空岛使用独立的 `PlanetLayer`，不伪装成普通地表聚落。
 - 空岛层在运行时注册，并与地表层、轨道层建立连接关系。
+- 世界缩放切层链固定为：`地表层 <-> 空岛层 <-> 轨道层`。
 - 空岛世界对象使用 `SkyIslandMapParent`，作为后续地图生成、视角切换和世界层定位的唯一入口。
 - 从空岛小地图切回世界时，背景世界视角应始终纠正到空岛层，而不是回到地表层。
 
@@ -25,17 +26,22 @@
 ### 2. 空岛地图方案
 
 - 空岛地图继续使用“核心区 + 浮空平台 + 云海背景”三层结构。
-- 核心区为固定可种植区域，使用自定义地形 `SkyrimIslands_IslandCore`。
-- 外围可建造平台使用自定义地形 `SkyrimIslands_FloatingPlatform`。
+- 核心区为半径 `6` 的圆形区域，使用自定义地形 `SkyrimIslands_IslandCore`。
+- 核心区正中心固定生成 `3x3` 的核心建筑 `SkyrimIslands_FloatingEnergySpire`。
+- 外围可建造平台使用自定义地形 `SkyrimIslands_FloatingPlatform`，围绕核心区形成一圈更厚的平台带。
+- 外圈边缘使用按角度分段的随机半径扰动，形成轻微凹凸，不使用纯规则圆边。
 - 云海作为不可通行、不可建造区域，视觉表现由背景层接管，不在地格本身重复渲染。
+- 云海上的坠毁残骸类杂物应视为无效落点结果并立即清理。
 - 地图生成继续由专用 `MapGeneratorDef` 和 `GenStep` 驱动。
 
 对应实现：
 
 - `Source/MapGen/GenStep_SkyIslandBase.cs`
 - `Source/MapGen/GenStep_SkyIslandCore.cs`
+- `Source/MapGen/SkyIslandShapeUtility.cs`
 - `1.6/Defs/MapGeneration/MapGeneration_SkyrimIslands.xml`
 - `1.6/Defs/TerrainDefs/Terrain_SkyrimIslands.xml`
+- `1.6/Defs/ThingDefs_Buildings/Buildings_SkyrimIslands_Core.xml`
 
 ### 3. Biome / Weather 方案
 
@@ -50,6 +56,29 @@
 - `1.6/Defs/BiomeDefs/Biomes_SkyrimIslands.xml`
 - `1.6/Defs/WeatherDefs/Weather_SkyrimIslands.xml`
 - `1.6/Patches/Patch_DisableVanillaWorldClouds.xml`
+
+### 4. 空岛研究方案
+
+- 空岛研究使用独立 `ResearchTabDef`，统一承载空岛专属科技。
+- 当前研究页按三条纵向泳道组织：
+  - 尖塔研究数据
+  - 云海研究数据
+  - 节点观测数据
+- 每条泳道都维护自己的“当前项目”，不复用原版单一 `currentProj` 作为唯一状态来源。
+- 左下详情区保留原版研究页结构，但改为同时显示三条当前研究进度，并用对应数据颜色提升辨识度。
+- 空岛研究项目详情会在描述后补充“研究类型图标 + 研究类型名”。
+- 普通研究台工作不会再无条件抢占空岛调查；只有当当前地图上确实存在可执行的空岛调查对象时，研究小人才会优先去做空岛调查。
+
+对应实现：
+
+- `Source/Research/GameComponent_SkyIslandResearch.cs`
+- `Source/Research/SkyIslandResearchProjectDef.cs`
+- `Source/Research/SkyIslandDataTypeDef.cs`
+- `Source/Patches/SkyIslandResearchProjectDef_Patches.cs`
+- `Source/Patches/CloudSeaFishing_Patches.cs`
+- `1.6/Defs/ResearchTabDefs/ResearchTabs_SkyrimIslands.xml`
+- `1.6/Defs/SkyIslandDataTypeDefs/SkyIslandDataTypes_SkyrimIslands.xml`
+- `1.6/Defs/ResearchProjectDefs/ResearchProjects_SkyrimIslands.xml`
 
 ## 开局任务链最终方案
 
@@ -87,6 +116,7 @@
   - 至少有一名已出生玩家殖民者可到达
 - 如果该环形区域内没有合法位置，再扩大到更宽的近中心区域继续搜索。
 - 原版 `DropCellFinder.GetBestShuttleLandingSpot(...)` 仅作为最后 fallback。
+- 如果进入原版 fallback 分支，会打印一条 `Warning` 便于调试落点异常。
 
 对应实现：
 
@@ -120,6 +150,7 @@
   - 可装行：允许调整数量，并受剩余载重限制
   - 不可装行：仅展示，不允许调整，并显示 `已禁用`
 - 打开窗口后只检测一次可达性，不在暂停状态下每帧重复计算。
+- 可装行的数量按钮遵循原版载重限制逻辑，支持 `>>M / M<` 这类“到最大载重”为止的快速调整。
 
 对应实现：
 
@@ -131,9 +162,12 @@
 - 起飞后进入自定义长转场。
 - 长转场结束时切入世界地图，不立即切入目标空岛地图。
 - 世界地图阶段播放穿梭机大地图飞行 cutscene，镜头跟随飞行中的世界对象。
+- 黑屏长转场本身不暂停游戏模拟，避免阻塞穿梭机离图与世界对象生成。
+- 进入世界飞行阶段前会短暂重试查找 `TravellingTransporters`，避免起飞时序导致空对象报错。
 - 目标空岛地图在飞行结束时才实际生成，避免提前触发不必要的“生成地图中”过场。
 - 抵达空岛后，切入空岛小地图，播放 `Ship_ShuttleCrashing` 坠毁到达动画并卸载内容。
 - 原起飞穿梭机本体不会在坠毁落地时再次吐出。
+- 世界飞行 cutscene 只在开头设置一次初始相机高度，后续允许玩家自行调整缩放视场。
 
 对应实现：
 
@@ -141,12 +175,31 @@
 - `Source/Quests/Initial/Screen_SkyIslandMigrationCinematics.cs`
 - `Source/Quests/Initial/Screen_SkyIslandWorldFlightCutscene.cs`
 - `Source/Quests/Initial/TransportersArrivalAction_SkyIslandMigration.cs`
+- `Source/Patches/CloudSeaDebrisPatch.cs`
 
 ## 当前已落地内容
 
 - 模组入口、Harmony 初始化、`DefOf`、Debug 输出链已经稳定。
 - 空岛层运行时注册、世界对象、Biome、Weather、云层绘制链已接通。
-- 空岛地图生成器、核心区、平台、云海地形已接通。
+- 世界缩放切层顺序已经更新为 `地表 -> 空岛 -> 轨道` 与反向链路。
+- 空岛地图生成器已经改成圆形核心、加厚外圈平台和随机凹凸边缘。
+- 地形用途已经重新调整：
+  - `IslandCore` 顶部使用机械族设施风格，非可耕种
+  - `FloatingPlatform` 顶部使用肥沃泥土，可耕种
+- 浮空能量尖塔已作为中心固定建筑接入地图生成，并使用专用贴图。
+- 空岛科技页已经落地，支持三条研究数据泳道与并列进度显示。
+- 尖塔研究线已经形成首轮可跑通闭环：
+  1. 初步调查
+  2. 尖塔阶段研究
+  3. 阶段推进操作
+  4. 最终重启
+- 尖塔研究已接入专用工作对象、研究进度与阶段任务推进。
+- 云海研究 demo 已接入：
+  - 新研究 `云海垂钓`
+  - 新建筑 `气象监测仪`
+  - 监测仪会随时间积累数据，满后可被研究员调查并一次性提供云海研究数据
+  - `云海垂钓` 研究完成后可在云海上使用原版钓鱼区设计器
+- 云海上的坠毁钢渣与建筑碎屑会自动清理。
 - 初始任务链已经能完整跑通：
   1. 新游戏开始
   2. 延时生成可接取任务
@@ -164,8 +217,31 @@
 
 - 空岛层高度、背景世界偏移、世界与小地图之间的视角参数仍需继续调优。
 - 空岛天气、云层速度、天空滤镜和整体视觉观感仍需继续定稿。
-- 资源系统、空岛移动、核心建筑、平台规则、袭击平台、后续特殊任务尚未进入正式实现。
+- 空岛研究目前只完成了尖塔线和云海 demo，节点观测泳道仍是占位框架。
+- 云海研究目前只有最小可用闭环，尚未接入更多研究项目、更多数据来源建筑或更细的调查反馈。
+- `气象监测仪` 目前使用原版 1x1 建筑贴图占位，尚未替换为专用美术资源。
+- 资源系统、空岛移动、平台规则、袭击平台、后续特殊任务尚未进入正式实现。
 - 语言文件、贴图资源、发布整理仍未完成。
+
+## 下一步计划
+
+下一阶段进入“空岛研究与后续资源系统扩展”，优先顺序如下：
+
+1. 扩展云海研究链
+- 在 `云海垂钓` 之外继续补充至少一到两项真正消耗云海研究数据的科技。
+- 让云海泳道形成“数据积累 -> 调查 -> 研究解锁 -> 新玩法入口”的连续闭环。
+
+2. 扩展研究数据来源
+- 为云海、节点观测等泳道增加更多可调查对象，而不只依赖单一建筑。
+- 明确不同数据来源之间的节奏差异，例如持续积累型、手动推进型、事件奖励型。
+
+3. 完善空岛研究 UI
+- 继续优化空岛科技页的可读性，包括泳道辨识、当前项目提示、类型标记和状态反馈。
+- 评估是否需要在右侧项目卡或左下进度区继续补充更明确的视觉区分。
+
+4. 把研究系统接入后续资源与剧情
+- 为后续空岛资源链、特殊建筑、剧情推进和世界层玩法提供统一的研究数据入口。
+- 不在这一阶段过度扩展所有玩法，而是优先保证研究系统继续扩展时结构稳定。
 
 ## 文档使用原则
 

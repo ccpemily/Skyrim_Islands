@@ -19,7 +19,8 @@ namespace SkyrimIslands.Quests.Initial
             doWindowBackground = false;
             doCloseButton = false;
             doCloseX = false;
-            forcePause = true;
+            forcePause = false;
+            preventCameraMotion = false;
         }
 
         public override Vector2 InitialSize => new Vector2(UI.screenWidth, UI.screenHeight);

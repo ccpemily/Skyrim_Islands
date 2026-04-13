@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <SkyrimIslands.Research.SkyIslandDataTypeDef>
+    <defName>SkyrimIslandsData_SpireResearch</defName>
+    <label>尖塔研究数据</label>
+    <description>由浮空能量尖塔的调查、修复与重启过程产出的专用研究数据。</description>
+    <shortLabel>尖塔数据</shortLabel>
+    <laneLabel>尖塔泳道</laneLabel>
+    <color>(90,210,255)</color>
+    <preferredResearchViewY>0.9</preferredResearchViewY>
+  </SkyrimIslands.Research.SkyIslandDataTypeDef>
+
+  <SkyrimIslands.Research.SkyIslandDataTypeDef>
+    <defName>SkyrimIslandsData_CloudSeaResearch</defName>
+    <label>云海研究数据</label>
+    <description>由云海生态、气候与资源采样得到的专用研究数据。当前仅保留框架占位。</description>
+    <shortLabel>云海数据</shortLabel>
+    <laneLabel>云海泳道</laneLabel>
+    <color>(120,180,255)</color>
+    <preferredResearchViewY>2.7</preferredResearchViewY>
+  </SkyrimIslands.Research.SkyIslandDataTypeDef>
+
+  <SkyrimIslands.Research.SkyIslandDataTypeDef>
+    <defName>SkyrimIslandsData_NodeObservation</defName>
+    <label>节点观测数据</label>
+    <description>由超凡链接节点和相关观测装置积累的专用研究数据。当前仅保留框架占位。</description>
+    <shortLabel>节点数据</shortLabel>
+    <laneLabel>节点泳道</laneLabel>
+    <color>(180,255,170)</color>
+    <preferredResearchViewY>4.5</preferredResearchViewY>
+  </SkyrimIslands.Research.SkyIslandDataTypeDef>
+
+</Defs>

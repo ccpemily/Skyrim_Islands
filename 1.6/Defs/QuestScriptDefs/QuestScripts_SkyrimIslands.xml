@@ -15,4 +15,18 @@
     <root Class="QuestNode_Sequence" />
   </QuestScriptDef>
 
+  <QuestScriptDef>
+    <defName>SkyrimIslands_SpireRecoveryQuest</defName>
+    <label>尖塔苏醒</label>
+    <rootSelectionWeight>0</rootSelectionWeight>
+    <isRootSpecial>true</isRootSpecial>
+    <autoAccept>false</autoAccept>
+    <hideOnCleanup>true</hideOnCleanup>
+    <questAvailableLetterLabel>尖塔苏醒</questAvailableLetterLabel>
+    <questAvailableLetterTextIsDescription>true</questAvailableLetterTextIsDescription>
+    <sendAvailableLetter>false</sendAvailableLetter>
+    <endOnColonyMove>false</endOnColonyMove>
+    <root Class="QuestNode_Sequence" />
+  </QuestScriptDef>
+
 </Defs>

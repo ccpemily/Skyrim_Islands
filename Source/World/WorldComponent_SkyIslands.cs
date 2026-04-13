@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
@@ -7,12 +10,8 @@ namespace SkyrimIslands.World
 {
     public class WorldComponent_SkyIslands : WorldComponent
     {
-        private const float SkyLayerRadius = 106f;
-        private const float SkyLayerViewAngle = 180f;
-        private const float SkyLayerExtraCameraAltitude = 20f;
-        private const int SkyLayerSubdivisions = 10;
-        private const float SkyLayerBackgroundWorldCameraOffset = 32f;
-        private const float SkyLayerBackgroundWorldCameraParallaxDistancePer100Cells = 0.5f;
+        private static readonly FieldInfo ConnectionsField =
+            typeof(PlanetLayer).GetField("connections", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
         private SkyIslandMapParent? startingSkyIsland;
 
@@ -38,12 +37,38 @@ namespace SkyrimIslands.World
                 return;
             }
 
-            EnsureSkyLayer();
+            if (fromLoad)
+            {
+                return;
+            }
+
+            NormalizeSkyLayerState();
+            EnsureSkyLayerLinks();
+        }
+
+        public override void WorldComponentTick()
+        {
+            base.WorldComponentTick();
+
+            if (!ModsConfig.OdysseyActive || Current.ProgramState == ProgramState.Entry)
+            {
+                return;
+            }
+
+            PlanetLayer? skyLayer = SkyIslandLayerBootstrap.GetSkyLayer();
+            if (skyLayer == null || !Find.WorldGrid.HasWorldData)
+            {
+                return;
+            }
+
+            NormalizeSkyLayerState();
+            EnsureSkyLayerLinks();
         }
 
         public SkyIslandMapParent CreateStartingSkyIslandAt(PlanetTile tile)
         {
-            PlanetLayer skyLayer = EnsureSkyLayer();
+            PlanetLayer skyLayer = SkyIslandLayerBootstrap.GetSkyLayer()
+                ?? throw new System.InvalidOperationException("Sky island layer was not registered during world initialization.");
             if (tile.Layer != skyLayer)
             {
                 tile = skyLayer.GetClosestTile_NewTemp(tile, true);
@@ -66,86 +91,181 @@ namespace SkyrimIslands.World
             return island;
         }
 
-        public PlanetLayer GetOrCreateSkyLayer()
+        public PlanetLayer GetSkyLayer()
         {
-            return EnsureSkyLayer();
+            return SkyIslandLayerBootstrap.GetSkyLayer()
+                ?? throw new System.InvalidOperationException("Sky island layer was not registered during world initialization.");
         }
 
-        private static PlanetLayer EnsureSkyLayer()
+        private void NormalizeSkyLayerState()
         {
-            PlanetLayer? existingLayer = Find.WorldGrid.FirstLayerOfDef(SkyrimIslandsDefOf.SkyrimIslands_SkyLayer);
-            if (existingLayer != null)
-            {
-                EnsureConnections(existingLayer);
-                EnsureZoomChain(existingLayer);
-                return existingLayer;
-            }
-
-            PlanetLayer? surfaceLayer = Find.WorldGrid.FirstLayerOfDef(PlanetLayerDefOf.Surface);
-
-            PlanetLayer layer = Find.WorldGrid.RegisterPlanetLayer(
-                SkyrimIslandsDefOf.SkyrimIslands_SkyLayer,
-                origin: Vector3.zero,
-                radius: SkyLayerRadius,
-                viewAngle: SkyLayerViewAngle,
-                extraCameraAltitude: SkyLayerExtraCameraAltitude,
-                subdivisions: SkyLayerSubdivisions,
-                backgroundWorldCameraOffset: SkyLayerBackgroundWorldCameraOffset,
-                backgroundWorldCameraParallaxDistancePer100Cells: SkyLayerBackgroundWorldCameraParallaxDistancePer100Cells,
-                overrideViewCenter: null);
-
-            int seed = GenText.StableStringHash(Find.World.info.seedString);
-            WorldGenerator.GeneratePlanetLayer(layer, Find.World.info.seedString, seed);
-            Find.WorldGrid.StandardizeTileData();
-
-            EnsureConnections(layer);
-            EnsureZoomChain(layer);
-
-            return layer;
-        }
-
-        private static void EnsureConnections(PlanetLayer skyLayer)
-        {
-            PlanetLayer? orbitLayer = Find.WorldGrid.FirstLayerOfDef(PlanetLayerDefOf.Orbit);
-            PlanetLayer? surfaceLayer = Find.WorldGrid.FirstLayerOfDef(PlanetLayerDefOf.Surface);
-
-            EnsureConnection(skyLayer, surfaceLayer);
-            EnsureConnection(surfaceLayer, skyLayer);
-            EnsureConnection(skyLayer, orbitLayer);
-            EnsureConnection(orbitLayer, skyLayer);
-        }
-
-        private static void EnsureZoomChain(PlanetLayer skyLayer)
-        {
-            PlanetLayer? orbitLayer = Find.WorldGrid.FirstLayerOfDef(PlanetLayerDefOf.Orbit);
-            PlanetLayer? surfaceLayer = Find.WorldGrid.FirstLayerOfDef(PlanetLayerDefOf.Surface);
-
-            if (surfaceLayer != null)
-            {
-                surfaceLayer.zoomOutToLayer = skyLayer;
-                skyLayer.zoomInToLayer = surfaceLayer;
-            }
-
-            if (orbitLayer != null)
-            {
-                skyLayer.zoomOutToLayer = orbitLayer;
-                orbitLayer.zoomInToLayer = skyLayer;
-            }
-        }
-
-        private static void EnsureConnection(PlanetLayer? from, PlanetLayer? to)
-        {
-            if (from == null || to == null || from == to || from.HasConnectionFromTo(to))
+            PlanetLayer? canonicalSkyLayer = GetCanonicalSkyLayer();
+            if (canonicalSkyLayer == null)
             {
                 return;
             }
 
-            from.AddConnection(to, 0f);
+            MigrateWorldObjectsToCanonicalLayer(canonicalSkyLayer);
+            RemoveRedundantSkyLayers(canonicalSkyLayer);
+
+            List<PlanetLayer> allLayers = Find.WorldGrid.PlanetLayers.Values.ToList();
+            for (int i = 0; i < allLayers.Count; i++)
+            {
+                NormalizeConnections(allLayers[i], canonicalSkyLayer);
+            }
+
+            SkyIslandLayerBootstrap.EnsureConnections(canonicalSkyLayer);
+            SkyIslandLayerBootstrap.EnsureZoomChain(canonicalSkyLayer);
+        }
+
+        private PlanetLayer? GetCanonicalSkyLayer()
+        {
+            if (startingSkyIsland != null &&
+                !startingSkyIsland.Destroyed &&
+                startingSkyIsland.Tile.Valid &&
+                startingSkyIsland.Tile.Layer.Def == SkyrimIslandsDefOf.SkyrimIslands_SkyLayer)
+            {
+                return startingSkyIsland.Tile.Layer;
+            }
+
+            SkyIslandMapParent? island = Find.WorldObjects.AllWorldObjects
+                .OfType<SkyIslandMapParent>()
+                .FirstOrDefault(static worldObject => worldObject.Tile.Valid &&
+                                                     worldObject.Tile.Layer.Def == SkyrimIslandsDefOf.SkyrimIslands_SkyLayer);
+            if (island != null)
+            {
+                return island.Tile.Layer;
+            }
+
+            PlanetLayer? existingLayer = Find.WorldGrid.FirstLayerOfDef(SkyrimIslandsDefOf.SkyrimIslands_SkyLayer);
+            if (existingLayer == null)
+            {
+                return null;
+            }
+
+            return existingLayer;
+        }
+
+        private static void RemoveRedundantSkyLayers(PlanetLayer canonicalSkyLayer)
+        {
+            List<PlanetLayer> duplicateLayers = Find.WorldGrid.PlanetLayers.Values
+                .Where(layer => layer != canonicalSkyLayer && layer.Def == SkyrimIslandsDefOf.SkyrimIslands_SkyLayer)
+                .ToList();
+
+            for (int i = 0; i < duplicateLayers.Count; i++)
+            {
+                PlanetLayer duplicateLayer = duplicateLayers[i];
+                bool hasWorldObjects = Find.WorldObjects.AllWorldObjects.Any(worldObject => worldObject.Tile.Layer == duplicateLayer);
+                if (hasWorldObjects)
+                {
+                    continue;
+                }
+
+                Find.WorldGrid.RemovePlanetLayer(duplicateLayer);
+            }
+        }
+
+        private void MigrateWorldObjectsToCanonicalLayer(PlanetLayer canonicalSkyLayer)
+        {
+            List<PlanetLayer> duplicateLayers = Find.WorldGrid.PlanetLayers.Values
+                .Where(layer => layer != canonicalSkyLayer && layer.Def == SkyrimIslandsDefOf.SkyrimIslands_SkyLayer)
+                .ToList();
+
+            for (int i = 0; i < duplicateLayers.Count; i++)
+            {
+                PlanetLayer duplicateLayer = duplicateLayers[i];
+                List<WorldObject> worldObjects = Find.WorldObjects.AllWorldObjects
+                    .Where(worldObject => worldObject.Tile.Valid && worldObject.Tile.Layer == duplicateLayer)
+                    .ToList();
+
+                for (int j = 0; j < worldObjects.Count; j++)
+                {
+                    WorldObject worldObject = worldObjects[j];
+                    PlanetTile destinationTile = canonicalSkyLayer.GetClosestTile_NewTemp(worldObject.Tile, false);
+                    if (!destinationTile.Valid)
+                    {
+                        destinationTile = canonicalSkyLayer.PlanetTileForID(worldObject.Tile.tileId);
+                    }
+
+                    worldObject.Tile = destinationTile;
+                    if (ReferenceEquals(worldObject, startingSkyIsland))
+                    {
+                        startingSkyIsland = (SkyIslandMapParent)worldObject;
+                    }
+                }
+
+                if (PlanetLayer.Selected == duplicateLayer)
+                {
+                    PlanetLayer.Selected = canonicalSkyLayer;
+                }
+            }
+        }
+
+        private static void NormalizeConnections(PlanetLayer layer, PlanetLayer canonicalSkyLayer)
+        {
+            Dictionary<PlanetLayer, PlanetLayerConnection>? existingConnections =
+                ConnectionsField.GetValue(layer) as Dictionary<PlanetLayer, PlanetLayerConnection>;
+            if (existingConnections == null || existingConnections.Count == 0)
+            {
+                return;
+            }
+
+            bool changed = false;
+            Dictionary<PlanetLayer, PlanetLayerConnection> normalizedConnections = new Dictionary<PlanetLayer, PlanetLayerConnection>();
+
+            foreach (KeyValuePair<PlanetLayer, PlanetLayerConnection> pair in existingConnections)
+            {
+                PlanetLayer? target = pair.Key ?? pair.Value?.target;
+                if (target == null || target == layer)
+                {
+                    changed = true;
+                    continue;
+                }
+
+                if (target.Def == SkyrimIslandsDefOf.SkyrimIslands_SkyLayer && target != canonicalSkyLayer)
+                {
+                    target = canonicalSkyLayer;
+                    changed = true;
+                }
+
+                if (normalizedConnections.ContainsKey(target))
+                {
+                    changed = true;
+                    continue;
+                }
+
+                PlanetLayerConnection connection = pair.Value ?? new PlanetLayerConnection();
+                if (connection.origin != layer || connection.target != target)
+                {
+                    connection.origin = layer;
+                    connection.target = target;
+                    changed = true;
+                }
+
+                normalizedConnections[target] = connection;
+            }
+
+            if (changed)
+            {
+                ConnectionsField.SetValue(layer, normalizedConnections);
+            }
         }
 
         private static bool IsTileUsable(PlanetTile tile)
         {
             return tile.Valid && !Find.WorldObjects.AnyWorldObjectAt(tile);
+        }
+
+        private static void EnsureSkyLayerLinks()
+        {
+            PlanetLayer? skyLayer = SkyIslandLayerBootstrap.GetSkyLayer();
+            if (skyLayer == null)
+            {
+                return;
+            }
+
+            SkyIslandLayerBootstrap.EnsureConnections(skyLayer);
+            SkyIslandLayerBootstrap.EnsureZoomChain(skyLayer);
         }
     }
 }

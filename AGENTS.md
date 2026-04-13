@@ -30,7 +30,15 @@
 
 ## Agent 说明
 查看 RimWorld 源码时，优先使用 `rimsearcher MCP` 进行检索、定位和阅读；不要默认改用普通文件搜索，除非 `rimsearcher MCP` 当前不可用。
+如果发现 `rimsearcher MCP` 返回 `Transport closed`，应立即停止当前任务，并第一时间向用户报告；不要在同一任务中默默切换到普通文件搜索继续推进。
 读取和写入文本文件时，默认使用 `UTF-8` 编码，尤其是包含中文的 `md`、`xml`、`cs` 文件；不要在未确认编码的情况下直接按控制台默认编码处理。
+如果任务需要使用反射（如 `Harmony AccessTools`、`System.Reflection`、字段/方法反射访问等），应立即暂停实现，并先向用户说明用途后征求确认；不要在未征求用户同意的情况下引入新的反射代码。
+如果需要缓存 `Texture2D` 等 Unity 资源的静态字段，不要直接放在普通业务类中；应统一放入单独的贴图缓存类（当前固定为 `Source/SkyrimIslandsTextureCache.cs` 中的 `SkyrimIslandsTextureCache`），并为该类添加 `StaticConstructorOnStartup`，确保资源在主线程初始化。后续所有新的静态 `Texture2D` 缓存都必须继续放进这个类，而不是分散到别的类里。
+如需查找某个具体模组的本地路径，优先使用以下顺序：
+- 先读取用户目录下的 `ModsConfig.xml`，确认目标模组当前启用时使用的 `packageId`
+- 再在常见本地模组目录和 Steam Workshop `294100` 目录中检索 `About/About.xml`
+- 以 `About.xml` 中的 `<packageId>` 为准确认模组根目录，不要只靠文件夹名判断
+- 如果多个模组只是依赖或补丁关系，应明确区分主模组与其附属模组，例如 `Ancot.MiliraRace`、`Ancot.MiliraRaceGenePatch`、`Ancot.MiliraRaceFacialAnimation`
 
 修改 Def 或新增代码后，应检查 XML 与 C# 的交叉引用是否一致，包括：
 - `defName` 与 `DefOf` 字段名是否一致

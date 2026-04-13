@@ -1,6 +1,28 @@
 # Skyrim Islands
 
-`Skyrim Islands` 是一个面向 `RimWorld 1.6` 的模组工程，当前仓库已经整理为可直接在 `VS Code` 中开发、构建与调试的结构。
+`Skyrim Islands` 是一个面向 `RimWorld 1.6` 的模组工程，当前强依赖 `Odyssey DLC`。仓库已经整理为可直接在 `VS Code` 中开发、构建与调试的结构。
+
+## 当前状态
+
+当前已经接通的内容包括：
+
+- 独立空岛世界层、空岛世界对象与世界缩放切层链
+- 空岛地图生成、核心区 / 平台 / 云海三层地形结构
+- 初始迁移任务、任务穿梭机、世界飞行 cutscene 与空岛着陆流程
+- 空岛科技页与三条研究数据泳道：
+  - 尖塔研究数据
+  - 云海研究数据
+  - 节点观测数据（当前仍为占位）
+- 尖塔主线第一轮闭环：
+  - 初步调查
+  - 阶段研究
+  - 阶段推进
+  - 最终重启
+- 云海研究 demo：
+  - `云海垂钓`
+  - `气象监测仪`
+  - 调查监测仪获得云海研究数据
+  - 研究完成后可在云海上划定钓鱼区
 
 ## 仓库结构
 
@@ -55,6 +77,13 @@ Skyrim_Islands/
 - Harmony：`Lib.Harmony 2.4.2`
 - 调试符号：默认生成 `portable pdb`
 
+开发约定补充：
+
+- 查看原版源码时，优先使用 `rimsearcher MCP`
+- 文本文件默认按 `UTF-8` 读写
+- 如果需要引入新的反射代码，应先停下并征求确认
+- 静态 `Texture2D` 缓存统一放在 `Source/SkyrimIslandsTextureCache.cs`
+
 ## 构建方法
 
 首次还原依赖：
@@ -102,3 +131,9 @@ dotnet build .\Skyrim_Islands.csproj -c Debug --no-restore
 1. 先完善 `About/About.xml` 中的 `author`、`packageId` 和 `description`
 2. 新增 XML 内容时，按用途放入 `1.6/Defs`、`1.6/Patches`、`1.6/Languages`
 3. 新增 C# 文件直接放入 `Source/` 或其子目录，工程会自动包含这些 `.cs` 文件
+
+## 相关文档
+
+- `IMPLEMENTATION.md`：当前有效的实现方案与已落地结果
+- `FEATURES.md`：功能草案与范围记录
+- `AGENTS.md`：仓库协作规则与额外约定

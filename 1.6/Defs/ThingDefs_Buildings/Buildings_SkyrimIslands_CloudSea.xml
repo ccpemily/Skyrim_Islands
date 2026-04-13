@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <ThingDef ParentName="BuildingBase">
+    <defName>SkyrimIslands_WeatherMonitor</defName>
+    <label>气象监测仪</label>
+    <description>一台用于持续记录云海风场、湿度和水层扰动的便携监测装置。数据积累完成后，研究人员可以前来调查并转化为一次性的云海研究数据。</description>
+    <category>Building</category>
+    <thingClass>SkyrimIslands.Quests.CloudSea.WeatherMonitor.Building_WeatherMonitor</thingClass>
+    <graphicData>
+      <texPath>Things/Building/Misc/ShipLandingBeacon</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(1,1)</drawSize>
+    </graphicData>
+    <tickerType>Normal</tickerType>
+    <altitudeLayer>Building</altitudeLayer>
+    <drawerType>MapMeshOnly</drawerType>
+    <selectable>true</selectable>
+    <minifiedDef>MinifiedThing</minifiedDef>
+    <thingCategories>
+      <li>BuildingsMisc</li>
+    </thingCategories>
+    <size>(1,1)</size>
+    <passability>PassThroughOnly</passability>
+    <fillPercent>0.35</fillPercent>
+    <drawHighlight>true</drawHighlight>
+    <uiOrder>2210</uiOrder>
+    <costList>
+      <Steel>45</Steel>
+      <ComponentIndustrial>1</ComponentIndustrial>
+    </costList>
+    <statBases>
+      <MaxHitPoints>120</MaxHitPoints>
+      <WorkToBuild>900</WorkToBuild>
+      <Mass>12</Mass>
+      <Flammability>1.2</Flammability>
+    </statBases>
+    <designationCategory>Misc</designationCategory>
+    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
+    <constructEffect>ConstructMetal</constructEffect>
+    <repairEffect>ConstructMetal</repairEffect>
+    <leaveResourcesWhenKilled>true</leaveResourcesWhenKilled>
+    <rotatable>false</rotatable>
+    <forceDebugSpawnable>true</forceDebugSpawnable>
+    <hasInteractionCell>true</hasInteractionCell>
+    <interactionCellOffset>(0,0,-1)</interactionCellOffset>
+    <building>
+      <isEdifice>false</isEdifice>
+      <claimable>true</claimable>
+      <destroySound>BuildingDestroyed_Metal_Small</destroySound>
+    </building>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>80</basePowerConsumption>
+        <shortCircuitInRain>true</shortCircuitInRain>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>

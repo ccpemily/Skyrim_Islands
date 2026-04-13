@@ -9,12 +9,15 @@ namespace SkyrimIslands.Quests.Initial
     public class TransportersArrivalAction_SkyIslandMigration : TransportersArrivalAction
     {
         public int cutsceneId;
+        private bool worldFlightStarted;
 
         private SkyIslandMapParent island = null!;
         private Map sourceMap = null!;
         private bool abandonOriginalColony;
 
         public override bool GeneratesMap => true;
+
+        public bool WorldFlightStarted => worldFlightStarted;
 
         public TransportersArrivalAction_SkyIslandMigration()
         {
@@ -58,9 +61,15 @@ namespace SkyrimIslands.Quests.Initial
         {
             base.ExposeData();
             Scribe_Values.Look(ref cutsceneId, "cutsceneId", 0);
+            Scribe_Values.Look(ref worldFlightStarted, "worldFlightStarted", false);
             Scribe_References.Look(ref island, "island");
             Scribe_References.Look(ref sourceMap, "sourceMap");
             Scribe_Values.Look(ref abandonOriginalColony, "abandonOriginalColony", false);
+        }
+
+        public void Notify_WorldFlightStarted()
+        {
+            worldFlightStarted = true;
         }
     }
 }

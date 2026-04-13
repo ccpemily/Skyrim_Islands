@@ -63,7 +63,6 @@ namespace SkyrimIslands.Quests.Initial
             }
 
             PlanetLayer.Selected = island.Tile.Layer;
-            SetFlightCameraAltitude();
             Find.WorldCameraDriver.JumpTo(travellingShuttle.DrawPos);
         }
 

@@ -9,24 +9,25 @@ namespace SkyrimIslands.MapGen
 
         public override void Generate(Map map, GenStepParams parms)
         {
-            CellRect coreRect = CellRect.CenteredOn(map.Center, 8, 8);
+            IntVec3 center = map.Center;
+            int shapeSeed = Gen.HashCombineInt(map.Tile, SeedPart);
 
             foreach (IntVec3 cell in map.AllCells)
             {
                 map.terrainGrid.SetTerrain(cell, SkyrimIslandsDefOf.SkyrimIslands_CloudSea);
             }
 
-            CellRect platformRect = CellRect.CenteredOn(map.Center, 16, 16);
-            foreach (IntVec3 cell in platformRect)
+            CellRect shapeBounds = SkyIslandShapeUtility.GetShapeBounds(center).ClipInsideMap(map);
+            foreach (IntVec3 cell in shapeBounds)
             {
-                if (cell.InBounds(map) && !coreRect.Contains(cell))
+                if (SkyIslandShapeUtility.IsPlatformCell(cell, center, shapeSeed))
                 {
                     map.terrainGrid.SetTerrain(cell, SkyrimIslandsDefOf.SkyrimIslands_FloatingPlatform);
                 }
             }
 
-            MapGenerator.SetVar("RectOfInterest", platformRect);
-            MapGenerator.UsedRects.Add(platformRect);
+            MapGenerator.SetVar("RectOfInterest", shapeBounds);
+            MapGenerator.UsedRects.Add(shapeBounds);
         }
     }
 }

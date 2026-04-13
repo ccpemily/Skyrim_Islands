@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <ResearchProjectDef Class="SkyrimIslands.Research.SkyIslandResearchProjectDef">
+    <defName>SkyrimIslands_SpireTech_0</defName>
+    <label>能量尖塔调查</label>
+    <description>对这座废弃建筑的初步调查显示它是这座岛屿能够漂浮在大气高层的关键。进行进一步调查可能会发现更多有价值的信息。</description>
+    <baseCost>1</baseCost>
+    <techLevel>Spacer</techLevel>
+    <tab>SkyrimIslands_SkyResearchTab</tab>
+    <researchViewX>0.7</researchViewX>
+    <researchViewY>0.9</researchViewY>
+    <skyIslandDataType>SkyrimIslandsData_SpireResearch</skyIslandDataType>
+    <stage>0</stage>
+    <allowManualResearch>false</allowManualResearch>
+    <discoveredLetterTitle>能量尖塔调查报告</discoveredLetterTitle>
+    <discoveredLetterText>对这座废弃建筑的初步调查显示它是这座岛屿能够漂浮在大气高层的关键。</discoveredLetterText>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef Class="SkyrimIslands.Research.SkyIslandResearchProjectDef">
+    <defName>SkyrimIslands_SpireTech_1</defName>
+    <label>协议兼容</label>
+    <description>研究表明尖塔使用的操作协议与部分机械族设施有相似之处，可以利用这个特点尝试建立与部分外围设施的连接。</description>
+    <baseCost>10</baseCost>
+    <prerequisites>
+      <li>SkyrimIslands_SpireTech_0</li>
+    </prerequisites>
+    <techLevel>Spacer</techLevel>
+    <tab>SkyrimIslands_SkyResearchTab</tab>
+    <researchViewX>1.7</researchViewX>
+    <researchViewY>0.9</researchViewY>
+    <skyIslandDataType>SkyrimIslandsData_SpireResearch</skyIslandDataType>
+    <stage>1</stage>
+    <allowManualResearch>false</allowManualResearch>
+    <discoveredLetterTitle>已破译数据协议</discoveredLetterTitle>
+    <discoveredLetterText>利用机械族设施的兼容协议，我们已经能够与尖塔的部分子系统建立初步连接。可以派遣一名殖民者前往外围设施进行骇入工作。</discoveredLetterText>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef Class="SkyrimIslands.Research.SkyIslandResearchProjectDef">
+    <defName>SkyrimIslands_SpireTech_2</defName>
+    <label>能量稳定器</label>
+    <description>进一步积累的尖塔研究数据让殖民者足以稳定重构尖塔的关键稳压结构，并准备最终重启。</description>
+    <baseCost>20</baseCost>
+    <prerequisites>
+      <li>SkyrimIslands_SpireTech_1</li>
+    </prerequisites>
+    <techLevel>Spacer</techLevel>
+    <tab>SkyrimIslands_SkyResearchTab</tab>
+    <researchViewX>2.7</researchViewX>
+    <researchViewY>0.9</researchViewY>
+    <skyIslandDataType>SkyrimIslandsData_SpireResearch</skyIslandDataType>
+    <stage>2</stage>
+    <allowManualResearch>false</allowManualResearch>
+    <discoveredLetterTitle>新项目可用：尖塔修复</discoveredLetterTitle>
+    <discoveredLetterText>尖塔稳定结构的重构方案已经完成，可在尖塔周围特定位置修建稳定器，进行尖塔重启的准备工作。</discoveredLetterText>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef Class="SkyrimIslands.Research.SkyIslandResearchProjectDef">
+    <defName>SkyrimIslands_SpireTech_3</defName>
+    <label>【尖塔】主控核心重启</label>
+    <description>尖塔完整重启后的最终示例科技。它代表尖塔路线已经完成当前骨架的闭环，也为后续更高层级功能预留了稳定入口。</description>
+    <baseCost>30</baseCost>
+    <prerequisites>
+      <li>SkyrimIslands_SpireTech_2</li>
+    </prerequisites>
+    <techLevel>Spacer</techLevel>
+    <tab>SkyrimIslands_SkyResearchTab</tab>
+    <researchViewX>3.7</researchViewX>
+    <researchViewY>0.9</researchViewY>
+    <skyIslandDataType>SkyrimIslandsData_SpireResearch</skyIslandDataType>
+    <stage>3</stage>
+    <allowManualResearch>false</allowManualResearch>
+    <discoveredLetterTitle>尖塔3级科技解锁</discoveredLetterTitle>
+    <discoveredLetterText>浮空能量尖塔已经完全重启，尖塔科技线的首轮示例闭环已经完成。</discoveredLetterText>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef Class="SkyrimIslands.Research.SkyIslandResearchProjectDef">
+    <defName>SkyrimIslands_CloudSeaFishing</defName>
+    <label>云海垂钓</label>
+    <description>通过持续记录气压、湿流与云层折射带的变化，可以在云海表面标定出稳定的垂钓带。完成后，殖民者便能在云海上划定钓鱼区，尝试从这片高空淡水层中获取鱼获。</description>
+    <baseCost>12</baseCost>
+    <prerequisites>
+      <li MayRequire="Ludeon.RimWorld.Odyssey">Fishing</li>
+    </prerequisites>
+    <techLevel>Industrial</techLevel>
+    <tab>SkyrimIslands_SkyResearchTab</tab>
+    <researchViewX>1.2</researchViewX>
+    <researchViewY>2.7</researchViewY>
+    <skyIslandDataType>SkyrimIslandsData_CloudSeaResearch</skyIslandDataType>
+    <stage>0</stage>
+    <allowManualResearch>false</allowManualResearch>
+    <customUnlockTexts>
+      <li>允许在云海上划定钓鱼区。</li>
+    </customUnlockTexts>
+    <discoveredLetterTitle>云海垂钓已完成</discoveredLetterTitle>
+    <discoveredLetterText>我们已经能稳定识别云海中的可垂钓水层，现在可以在云海上划定钓鱼区了。</discoveredLetterText>
+  </ResearchProjectDef>
+
+</Defs>

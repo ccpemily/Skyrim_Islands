@@ -113,8 +113,7 @@ namespace SkyrimIslands.Quests.Initial
             QuestPart_SkyIslandMigration mission = quest2.AddPart<QuestPart_SkyIslandMigration>();
             mission.inSignalEnable = quest2.InitiateSignal;
             mission.sourceMap = sourceMap;
-            mission.landingCell = DropCellFinder.GetBestShuttleLandingSpot(sourceMap, Faction.OfPlayer);
-                mission.signalListenMode = QuestPart.SignalListenMode.OngoingOnly;
+            mission.signalListenMode = QuestPart.SignalListenMode.OngoingOnly;
 
             Find.QuestManager.Add(quest2);
             Find.LetterStack.ReceiveLetter(

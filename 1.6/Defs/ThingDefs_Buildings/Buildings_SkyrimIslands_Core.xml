@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <ThingDef ParentName="BuildingBase">
+    <defName>SkyrimIslands_FloatingEnergySpire</defName>
+    <label>浮空能量尖塔</label>
+    <description>一座锚定在空岛核心上的古老能量尖塔。它是整座空岛最稳定的结构，也是后续系统扩展的核心节点。</description>
+    <thingClass>SkyrimIslands.Quests.Spire.Building_FloatingEnergySpire</thingClass>
+    <size>(3,3)</size>
+    <rotatable>false</rotatable>
+    <selectable>true</selectable>
+    <useHitPoints>false</useHitPoints>
+    <destroyable>false</destroyable>
+    <drawerType>MapMeshAndRealTime</drawerType>
+    <altitudeLayer>BuildingOnTop</altitudeLayer>
+    <fillPercent>1.0</fillPercent>
+    <passability>Impassable</passability>
+    <pathCost>60</pathCost>
+    <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
+    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
+    <filthLeaving />
+    <hasInteractionCell>true</hasInteractionCell>
+    <interactionCellOffset>(0,0,-2)</interactionCellOffset>
+    <graphicData>
+      <graphicClass>Graphic_Single</graphicClass>
+      <texPath>Things/Building/SkyIslandCore/FloatingEnergySpire</texPath>
+      <drawSize>(3.0,6.0)</drawSize>
+      <drawOffset>(0,0,1.5)</drawOffset>
+      <shadowData>
+        <volume>(2.0, 1.0, 2.0)</volume>
+        <offset>(0, 0, -0.1)</offset>
+      </shadowData>
+    </graphicData>
+    <statBases>
+      <Flammability>0</Flammability>
+      <Beauty>4</Beauty>
+    </statBases>
+    <building>
+      <isEdifice>true</isEdifice>
+      <deconstructible>false</deconstructible>
+      <repairable>false</repairable>
+      <isTargetable>false</isTargetable>
+      <isInert>true</isInert>
+      <claimable>false</claimable>
+      <expandHomeArea>false</expandHomeArea>
+    </building>
+  </ThingDef>
+
+</Defs>

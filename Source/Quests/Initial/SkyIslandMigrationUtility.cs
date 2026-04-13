@@ -5,6 +5,7 @@ using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using SkyrimIslands.Research;
 using SkyrimIslands.World;
 
 namespace SkyrimIslands.Quests.Initial
@@ -13,6 +14,8 @@ namespace SkyrimIslands.Quests.Initial
     {
         public const float PrototypeMassCapacity = 650f;
         private const float DepartureDelaySeconds = 4.2f;
+        private const float WorldFlightRetryDelaySeconds = 0.25f;
+        private const int WorldFlightRetryCount = 24;
         private const int TargetTileMinDistance = 4;
         private const int TargetTileMaxDistance = 12;
         private const int TargetTileFallbackMaxDistance = 30;
@@ -24,7 +27,7 @@ namespace SkyrimIslands.Quests.Initial
         public static void BeginMigrationFromLoadedShuttle(Map sourceMap, Thing shuttle, bool abandonOriginalColony, IntVec3 departureCell)
         {
             WorldComponent_SkyIslands skyIslands = Find.World.GetComponent<WorldComponent_SkyIslands>();
-            PlanetLayer skyLayer = skyIslands.GetOrCreateSkyLayer();
+            PlanetLayer skyLayer = skyIslands.GetSkyLayer();
             PlanetTile skyTile = FindMigrationTargetTile(sourceMap, skyLayer);
             SkyIslandMapParent island = skyIslands.CreateStartingSkyIslandAt(skyTile);
             int cutsceneId = Find.UniqueIDsManager.GetNextSignalTagID();
@@ -45,7 +48,7 @@ namespace SkyrimIslands.Quests.Initial
             {
                 Find.WindowStack.Add(new Screen_SkyIslandMigrationCinematics(delegate
                 {
-                    StartWorldFlightCutscene(cutsceneId, island);
+                    StartWorldFlightCutscene(cutsceneId, island, WorldFlightRetryCount);
                 }));
             });
         }
@@ -83,6 +86,8 @@ namespace SkyrimIslands.Quests.Initial
                 "未知穿梭机已经飞抵空岛上空，并在降落过程中失控坠毁。幸存的殖民者与物资已经抵达新的家园。",
                 LetterDefOf.PositiveEvent,
                 new LookTargets(targetMap.Center, targetMap));
+
+            Current.Game.GetComponent<GameComponent_SkyIslandResearch>()?.ScheduleInitialSpireQuest(targetMap);
         }
 
         private static void SpawnArrivalShuttle(Map targetMap, List<ActiveTransporterInfo> transporters)
@@ -111,19 +116,33 @@ namespace SkyrimIslands.Quests.Initial
             transportShip.AddJob(unloadJob);
         }
 
-        private static void StartWorldFlightCutscene(int cutsceneId, SkyIslandMapParent island)
+        private static void StartWorldFlightCutscene(int cutsceneId, SkyIslandMapParent island, int retriesLeft)
         {
             ScreenFader.StartFade(Color.clear, 1f);
 
             TravellingTransporters? travellingShuttle = FindTravellingMissionShuttle(cutsceneId);
             if (travellingShuttle == null)
             {
+                if (retriesLeft > 0)
+                {
+                    GameComponent_SkyIslandFlow.ScheduleRealtimeAction(WorldFlightRetryDelaySeconds, delegate
+                    {
+                        StartWorldFlightCutscene(cutsceneId, island, retriesLeft - 1);
+                    });
+                    return;
+                }
+
                 Log.Error("[Skyrim Islands] Could not find the travelling shuttle world object for migration cutscene.");
                 CameraJumper.TryShowWorld();
                 Find.World.renderer.wantedMode = WorldRenderMode.Planet;
                 PlanetLayer.Selected = island.Tile.Layer;
                 Find.WorldCameraDriver.JumpTo(island.Tile);
                 return;
+            }
+
+            if (travellingShuttle.arrivalAction is TransportersArrivalAction_SkyIslandMigration migration)
+            {
+                migration.Notify_WorldFlightStarted();
             }
 
             CameraJumper.TryShowWorld();
