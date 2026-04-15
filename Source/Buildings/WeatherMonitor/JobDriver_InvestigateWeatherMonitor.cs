@@ -4,7 +4,7 @@ using SkyrimIslands.Research;
 using Verse;
 using Verse.AI;
 
-namespace SkyrimIslands.Quests.CloudSea.WeatherMonitor
+namespace SkyrimIslands.Buildings.WeatherMonitor
 {
     public class JobDriver_InvestigateWeatherMonitor : JobDriver
     {

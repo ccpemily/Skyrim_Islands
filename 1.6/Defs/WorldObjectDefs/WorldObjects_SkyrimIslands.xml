@@ -6,6 +6,10 @@
     <label>sky island</label>
     <description>A floating colony platform anchored high above the planet.</description>
     <worldObjectClass>SkyrimIslands.World.SkyIslandMapParent</worldObjectClass>
+    <useDynamicDrawer>true</useDynamicDrawer>
+    <comps>
+      <li Class="SkyrimIslands.World.CompProperties_SkyIslandMovement" />
+    </comps>
     <expandingIconTexture>World/WorldObjects/Expanding/SettlementPlatform</expandingIconTexture>
     <expandingIconColor>(255,255,255,255)</expandingIconColor>
     <overrideMapSize>(250,1,250)</overrideMapSize>

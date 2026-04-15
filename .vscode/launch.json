@@ -3,11 +3,12 @@
   "configurations": [
     {
       "name": "Launch RimWorld",
-      "type": "node-terminal",
+      "type": "node",
       "request": "launch",
-      "command": "powershell -NoProfile -Command \"`$process = Get-Process RimWorldWin64 -ErrorAction SilentlyContinue | Select-Object -First 1; if (`$process) { Wait-Process -Id `$process.Id } else { `$process = Start-Process -FilePath '${workspaceFolder}\\..\\..\\RimWorldWin64.exe' -WorkingDirectory '${workspaceFolder}\\..\\..' -PassThru; Wait-Process -Id `$process.Id }\"",
+      "program": "${workspaceFolder}\\.vscode\\launch-rimworld.js",
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "build mod"
+      "preLaunchTask": "build mod",
+      "console": "internalConsole"
     }
   ]
 }

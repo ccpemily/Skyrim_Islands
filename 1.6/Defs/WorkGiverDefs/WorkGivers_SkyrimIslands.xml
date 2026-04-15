@@ -4,7 +4,7 @@
   <WorkGiverDef>
     <defName>SkyrimIslands_StudySpireProject</defName>
     <label>研究浮空能量尖塔</label>
-    <giverClass>SkyrimIslands.Quests.Spire.WorkGiver_StudySpireProject</giverClass>
+    <giverClass>SkyrimIslands.Buildings.FloatingEnergySpire.WorkGiver_StudySpireProject</giverClass>
     <workType>Research</workType>
     <priorityInType>95</priorityInType>
     <verb>研究</verb>
@@ -14,7 +14,7 @@
   <WorkGiverDef>
     <defName>SkyrimIslands_InvestigateWeatherMonitor</defName>
     <label>调查气象监测仪</label>
-    <giverClass>SkyrimIslands.Quests.CloudSea.WeatherMonitor.WorkGiver_InvestigateWeatherMonitor</giverClass>
+    <giverClass>SkyrimIslands.Buildings.WeatherMonitor.WorkGiver_InvestigateWeatherMonitor</giverClass>
     <workType>Research</workType>
     <priorityInType>94</priorityInType>
     <verb>调查</verb>

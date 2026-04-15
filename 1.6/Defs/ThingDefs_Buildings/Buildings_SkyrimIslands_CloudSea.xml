@@ -6,7 +6,7 @@
     <label>气象监测仪</label>
     <description>一台用于持续记录云海风场、湿度和水层扰动的便携监测装置。数据积累完成后，研究人员可以前来调查并转化为一次性的云海研究数据。</description>
     <category>Building</category>
-    <thingClass>SkyrimIslands.Quests.CloudSea.WeatherMonitor.Building_WeatherMonitor</thingClass>
+    <thingClass>SkyrimIslands.Buildings.WeatherMonitor.Building_WeatherMonitor</thingClass>
     <graphicData>
       <texPath>Things/Building/Misc/ShipLandingBeacon</texPath>
       <graphicClass>Graphic_Single</graphicClass>

@@ -2,7 +2,7 @@ using System.Linq;
 using Verse;
 using SkyrimIslands.World;
 
-namespace SkyrimIslands.Quests.Spire
+namespace SkyrimIslands.Buildings.FloatingEnergySpire
 {
     public static class SkyIslandSpireUtility
     {

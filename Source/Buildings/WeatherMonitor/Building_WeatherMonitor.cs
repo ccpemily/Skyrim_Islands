@@ -5,7 +5,7 @@ using UnityEngine;
 using Verse;
 using Verse.AI;
 
-namespace SkyrimIslands.Quests.CloudSea.WeatherMonitor
+namespace SkyrimIslands.Buildings.WeatherMonitor
 {
     public class Building_WeatherMonitor : Building
     {

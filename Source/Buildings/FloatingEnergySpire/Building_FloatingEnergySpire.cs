@@ -5,7 +5,7 @@ using UnityEngine;
 using Verse;
 using Verse.AI;
 
-namespace SkyrimIslands.Quests.Spire
+namespace SkyrimIslands.Buildings.FloatingEnergySpire
 {
     public enum FloatingEnergySpireState : byte
     {

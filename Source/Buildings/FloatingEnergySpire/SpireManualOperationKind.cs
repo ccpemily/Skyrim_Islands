@@ -1,4 +1,4 @@
-namespace SkyrimIslands.Quests.Spire
+namespace SkyrimIslands.Buildings.FloatingEnergySpire
 {
     public enum SpireManualOperationKind : byte
     {

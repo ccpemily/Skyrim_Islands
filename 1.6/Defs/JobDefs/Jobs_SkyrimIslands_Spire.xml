@@ -3,35 +3,35 @@
 
   <JobDef>
     <defName>SkyrimIslands_InvestigateSpire</defName>
-    <driverClass>SkyrimIslands.Quests.Spire.JobDriver_OperateFloatingEnergySpire</driverClass>
+    <driverClass>SkyrimIslands.Buildings.FloatingEnergySpire.JobDriver_OperateFloatingEnergySpire</driverClass>
     <reportString>调查浮空能量尖塔。</reportString>
     <neverShowWeapon>true</neverShowWeapon>
   </JobDef>
 
   <JobDef>
     <defName>SkyrimIslands_RepairSpire</defName>
-    <driverClass>SkyrimIslands.Quests.Spire.JobDriver_OperateFloatingEnergySpire</driverClass>
+    <driverClass>SkyrimIslands.Buildings.FloatingEnergySpire.JobDriver_OperateFloatingEnergySpire</driverClass>
     <reportString>修复浮空能量尖塔。</reportString>
     <neverShowWeapon>true</neverShowWeapon>
   </JobDef>
 
   <JobDef>
     <defName>SkyrimIslands_RestartSpire</defName>
-    <driverClass>SkyrimIslands.Quests.Spire.JobDriver_OperateFloatingEnergySpire</driverClass>
+    <driverClass>SkyrimIslands.Buildings.FloatingEnergySpire.JobDriver_OperateFloatingEnergySpire</driverClass>
     <reportString>重启浮空能量尖塔。</reportString>
     <neverShowWeapon>true</neverShowWeapon>
   </JobDef>
 
   <JobDef>
     <defName>SkyrimIslands_StudySpireProject</defName>
-    <driverClass>SkyrimIslands.Quests.Spire.JobDriver_StudySpireProject</driverClass>
+    <driverClass>SkyrimIslands.Buildings.FloatingEnergySpire.JobDriver_StudySpireProject</driverClass>
     <reportString>研究浮空能量尖塔。</reportString>
     <neverShowWeapon>true</neverShowWeapon>
   </JobDef>
 
   <JobDef>
     <defName>SkyrimIslands_InvestigateWeatherMonitor</defName>
-    <driverClass>SkyrimIslands.Quests.CloudSea.WeatherMonitor.JobDriver_InvestigateWeatherMonitor</driverClass>
+    <driverClass>SkyrimIslands.Buildings.WeatherMonitor.JobDriver_InvestigateWeatherMonitor</driverClass>
     <reportString>调查气象监测仪。</reportString>
     <neverShowWeapon>true</neverShowWeapon>
   </JobDef>

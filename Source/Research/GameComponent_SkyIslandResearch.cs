@@ -1,6 +1,6 @@
 using RimWorld;
-using SkyrimIslands.Quests.Spire;
-using SkyrimIslands.Quests.CloudSea.WeatherMonitor;
+using SkyrimIslands.Buildings.FloatingEnergySpire;
+using SkyrimIslands.Buildings.WeatherMonitor;
 using Verse;
 using System.Collections.Generic;
 using System.Linq;

@@ -16,6 +16,7 @@
 命名空间遵循当前项目约定：
 - `Source/` 根目录：`SkyrimIslands`
 - `Source/*` 子目录：`SkyrimIslands.*`
+- **新增建筑（Building/Thing）**：若该物体**只在任务过程中出现，且不影响任务之外的任何游戏部分**（如未知穿梭机），可放在 `Source/Quests/$QUEST_NAME$/` 下；其余所有新增建筑统一放在 `Source/Buildings/$BUILDING_NAME$/`，命名空间使用 `SkyrimIslands.Buildings.$BUILDING_NAME$`
 - 新增任务时，任务主逻辑统一放在 `Source/Quests/$QUEST_NAME$/`，命名空间使用 `SkyrimIslands.Quests.$QUEST_NAME$`
 - 任务相关的专用物体、组件、命令、窗口等，统一放在 `Source/Quests/$QUEST_NAME$/$OBJECT_NAME$/`，命名空间使用 `SkyrimIslands.Quests.$QUEST_NAME$.$OBJECT_NAME$`
 
@@ -32,6 +33,7 @@
 查看 RimWorld 源码时，优先使用 `rimsearcher MCP` 进行检索、定位和阅读；不要默认改用普通文件搜索，除非 `rimsearcher MCP` 当前不可用。
 如果发现 `rimsearcher MCP` 返回 `Transport closed`，应立即停止当前任务，并第一时间向用户报告；不要在同一任务中默默切换到普通文件搜索继续推进。
 读取和写入文本文件时，默认使用 `UTF-8` 编码，尤其是包含中文的 `md`、`xml`、`cs` 文件；不要在未确认编码的情况下直接按控制台默认编码处理。
+遇到 `PlayOneShotOnCamera`、`PlayOneShot`、`TrySpawnSustainer` 等声音调用在编辑器里报“方法不存在”时，先检查当前文件是否缺少 `using Verse.Sound;`。这些通常是 `Verse.Sound.SoundStarter` 提供的 `SoundDef` 扩展方法；在确认只是命名空间缺失之前，不要把原有声音调用当成无效代码直接删除。
 如果任务需要使用反射（如 `Harmony AccessTools`、`System.Reflection`、字段/方法反射访问等），应立即暂停实现，并先向用户说明用途后征求确认；不要在未征求用户同意的情况下引入新的反射代码。
 如果需要缓存 `Texture2D` 等 Unity 资源的静态字段，不要直接放在普通业务类中；应统一放入单独的贴图缓存类（当前固定为 `Source/SkyrimIslandsTextureCache.cs` 中的 `SkyrimIslandsTextureCache`），并为该类添加 `StaticConstructorOnStartup`，确保资源在主线程初始化。后续所有新的静态 `Texture2D` 缓存都必须继续放进这个类，而不是分散到别的类里。
 如需查找某个具体模组的本地路径，优先使用以下顺序：

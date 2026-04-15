@@ -5,7 +5,7 @@
     <defName>SkyrimIslands_FloatingEnergySpire</defName>
     <label>浮空能量尖塔</label>
     <description>一座锚定在空岛核心上的古老能量尖塔。它是整座空岛最稳定的结构，也是后续系统扩展的核心节点。</description>
-    <thingClass>SkyrimIslands.Quests.Spire.Building_FloatingEnergySpire</thingClass>
+    <thingClass>SkyrimIslands.Buildings.FloatingEnergySpire.Building_FloatingEnergySpire</thingClass>
     <size>(3,3)</size>
     <rotatable>false</rotatable>
     <selectable>true</selectable>

@@ -3,7 +3,7 @@ using SkyrimIslands.Research;
 using Verse;
 using Verse.AI;
 
-namespace SkyrimIslands.Quests.Spire
+namespace SkyrimIslands.Buildings.FloatingEnergySpire
 {
     public class WorkGiver_StudySpireProject : WorkGiver_Scanner
     {

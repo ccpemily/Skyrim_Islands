@@ -11,7 +11,6 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
 {
     public class Dialog_SkyIslandLoadTransporters : Window
     {
-        private const float TabsVisualHeight = 32f;
         private enum Tab
         {
             Pawns,
@@ -30,6 +29,9 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
         private float cachedMassUsage;
         private Vector2 itemsScrollPosition;
         private List<ItemTransferRow> itemRows = null!;
+        private readonly QuickSearchWidget itemsQuickSearchWidget = new QuickSearchWidget();
+        private TransferableSorterDef itemsSorter1 = TransferableSorterDefOf.Category;
+        private TransferableSorterDef itemsSorter2 = TransferableSorterDefOf.MarketValue;
 
         public Dialog_SkyIslandLoadTransporters(Map map, CompSkyIslandMissionTransporter transporter)
         {
@@ -38,10 +40,9 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
             forcePause = true;
             absorbInputAroundWindow = true;
             closeOnAccept = false;
-            CalculateAndRecacheTransferables();
         }
 
-        public override Vector2 InitialSize => new Vector2(1024f, UI.screenHeight);
+        public override Vector2 InitialSize => new Vector2(1024f, (float)UI.screenHeight);
 
         protected override float Margin => 0f;
 
@@ -65,6 +66,16 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
             }
         }
 
+        public override void PostOpen()
+        {
+            base.PostOpen();
+            CalculateAndRecacheTransferables();
+            if (transporter.LoadingInProgressOrReadyToLaunch)
+            {
+                SetLoadedItemsToLoad();
+            }
+        }
+
         public override void DoWindowContents(Rect inRect)
         {
             Rect titleRect = new Rect(0f, 0f, inRect.width, 35f);
@@ -75,51 +86,31 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
             Text.Anchor = TextAnchor.UpperLeft;
 
             Rect infoRect = new Rect(12f, 35f, inRect.width - 24f, 40f);
-            CaravanUIUtility.DrawCaravanInfo(
-                new CaravanUIUtility.CaravanInfo(
-                    MassUsage,
-                    MassCapacity,
-                    "",
-                    0f,
-                    "",
-                    (0f, 0f),
-                    (null!, 0f),
-                    "",
-                    0f,
-                    "",
-                    0f,
-                    0f,
-                    ""),
-                null,
-                map.Tile,
-                null,
-                lastMassFlashTime,
-                infoRect,
-                false,
-                null,
-                false,
-                false);
-
-            Rect sectionRect = new Rect(0f, 87f + TabsVisualHeight, inRect.width, inRect.height - 87f - TabsVisualHeight);
-            Widgets.DrawMenuSection(sectionRect);
+            List<TransferableUIUtility.ExtraInfo> info = new List<TransferableUIUtility.ExtraInfo>();
+            TaggedString massLabel = string.Format("{0} / {1:F0} ", MassUsage.ToStringEnsureThreshold(MassCapacity, 0), MassCapacity) + "kg".Translate();
+            string massTip = "MassCarriedSimple".Translate() + ": " + MassUsage.ToStringEnsureThreshold(MassCapacity, 2) + " " + "kg".Translate() + "\n" + "MassCapacity".Translate() + ": " + MassCapacity.ToString("F2") + " " + "kg".Translate();
+            Color massColor = MassUsage > MassCapacity ? Color.red : Color.white;
+            info.Add(new TransferableUIUtility.ExtraInfo("Mass".Translate(), massLabel, massColor, massTip, lastMassFlashTime));
+            TransferableUIUtility.DrawExtraInfo(info, infoRect);
+            inRect.yMin += 52f;
 
             List<TabRecord> tabs = new List<TabRecord>
             {
                 new TabRecord("人员".Translate(), delegate { tab = Tab.Pawns; }, tab == Tab.Pawns),
                 new TabRecord("物品".Translate(), delegate { tab = Tab.Items; }, tab == Tab.Items)
             };
-            TabDrawer.DrawTabs(sectionRect, tabs, 200f);
+            inRect.yMin += 67f;
+            Widgets.DrawMenuSection(inRect);
+            TabDrawer.DrawTabs(inRect, tabs, 200f);
+            inRect = inRect.ContractedBy(17f);
+            inRect.height += 17f;
+            Widgets.BeginGroup(inRect);
 
-            Rect groupRect = sectionRect.ContractedBy(17f);
-            groupRect.height += 17f;
-            Widgets.BeginGroup(groupRect);
-
-            Rect contentRect = groupRect.AtZero();
+            Rect contentRect = inRect.AtZero();
             DoBottomButtons(contentRect);
 
             Rect transferRect = contentRect;
-            transferRect.yMin += 32f;
-            transferRect.yMax -= 72f;
+            transferRect.yMax -= 76f;
 
             bool anythingChanged;
             if (tab == Tab.Pawns)
@@ -195,7 +186,7 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
                 map.Tile,
                 true,
                 true,
-                true,
+                false,
                 false,
                 false,
                 true,
@@ -205,11 +196,6 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
                 false);
             CaravanUIUtility.AddPawnsSections(pawnsTransfer, transferables);
 
-            if (transporter.LoadingInProgressOrReadyToLaunch)
-            {
-                ApplyPendingLoadCounts();
-            }
-
             RebuildItemRows();
             CountToTransferChanged();
         }
@@ -218,35 +204,53 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
         {
             anythingChanged = false;
 
-            if (itemRows.Count == 0)
+            TransferableUIUtility.DoTransferableSorters(itemsSorter1, itemsSorter2,
+                delegate(TransferableSorterDef x) { itemsSorter1 = x; },
+                delegate(TransferableSorterDef x) { itemsSorter2 = x; });
+            itemsQuickSearchWidget.noResultsMatched = !GetFilteredAndSortedItemRows().Any();
+            TransferableUIUtility.DoTransferableSearcher(itemsQuickSearchWidget, delegate { });
+
+            Rect mainRect = new Rect(inRect.x, inRect.y + 37f, inRect.width, inRect.height - 37f);
+
+            List<ItemTransferRow> filteredRows = GetFilteredAndSortedItemRows();
+            if (filteredRows.Count == 0)
             {
                 GUI.color = Color.gray;
                 Text.Anchor = TextAnchor.UpperCenter;
-                Widgets.Label(inRect, "NoneBrackets".Translate());
+                Widgets.Label(mainRect, "NoneBrackets".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
                 return;
             }
 
-            float viewHeight = 6f + itemRows.Count * 30f;
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, viewHeight);
-            Widgets.BeginScrollView(inRect, ref itemsScrollPosition, viewRect, true);
+            float viewHeight = 6f + filteredRows.Count * 30f;
+            Rect viewRect = new Rect(0f, 0f, mainRect.width - 16f, viewHeight);
+            Widgets.BeginScrollView(mainRect, ref itemsScrollPosition, viewRect, true);
 
             float minVisibleY = itemsScrollPosition.y - 30f;
-            float maxVisibleY = itemsScrollPosition.y + inRect.height;
+            float maxVisibleY = itemsScrollPosition.y + mainRect.height;
             float curY = 6f;
-            for (int i = 0; i < itemRows.Count; i++)
+            for (int i = 0; i < filteredRows.Count; i++)
             {
                 if (curY > minVisibleY && curY < maxVisibleY)
                 {
                     Rect rowRect = new Rect(0f, curY, viewRect.width, 30f);
-                    DrawItemRow(rowRect, itemRows[i], i, ref anythingChanged);
+                    DrawItemRow(rowRect, filteredRows[i], i, ref anythingChanged);
                 }
 
                 curY += 30f;
             }
 
             Widgets.EndScrollView();
+        }
+
+        private List<ItemTransferRow> GetFilteredAndSortedItemRows()
+        {
+            var query = itemRows.Where(r => itemsQuickSearchWidget.filter.Matches(r.transferable.Label));
+            query = query.OrderBy(r => r.transferable, itemsSorter1.Comparer)
+                         .ThenBy(r => r.transferable, itemsSorter2.Comparer)
+                         .ThenBy(r => TransferableUIUtility.DefaultListOrderPriority(r.transferable));
+            return query.ToList();
         }
 
         private void DrawItemRow(Rect rect, ItemTransferRow row, int index, ref bool anythingChanged)
@@ -372,7 +376,7 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
                 }
             }
 
-            if (transferable.CountToTransfer < maxCount)
+            if (transferable.CountToTransfer < massLimitedMax)
             {
                 Rect rightDoubleRect = new Rect(centerRect.xMax + 30f, rect.y, 30f, rect.height);
                 string rightDoubleLabel = massLimitedMax < maxCount ? ">>M" : ">>";
@@ -556,7 +560,7 @@ namespace SkyrimIslands.Quests.Initial.Shuttle
             }
         }
 
-        private void ApplyPendingLoadCounts()
+        private void SetLoadedItemsToLoad()
         {
             for (int i = 0; i < transferables.Count; i++)
             {

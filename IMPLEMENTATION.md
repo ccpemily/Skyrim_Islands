@@ -212,6 +212,18 @@
   9. 切入大地图播放飞行 cutscene
   10. 生成目标空岛地图
   11. 坠毁穿梭机落地并卸载
+- **空岛移动系统已经实现并落地：**
+  - `CompSkyIslandMovement` 挂载于 `SkyIslandMapParent`，负责连续移动状态
+  - 使用球面插值实现平滑移动，状态机包含 `Idle / Accelerating / Cruising / Decelerating / Interrupting`
+  - 路径规划基于地表层选点，内部映射到 sky tile，最多支持 10 个路径点
+  - `GameComponent_SkyIslandMovement` 提供路径规划模式，支持添加/删除路径点
+  - 空岛图标启用 `useDynamicDrawer`，`DrawPos` 与 `WorldCameraPosition` 随连续位置实时更新
+  - `SkyIslandMovementRenderUtility` 在世界地图上绘制路径预览、地面投影标记和天空层连线
+  - 空岛总控界面 `Window_SkyIslandControl` 与浮动按钮 `Window_SkyIslandControlButton` 已接入，支持查看状态、规划路径、启动引擎和中断移动
+- **平滑本地时间系统已经实现并落地：**
+  - `SkyIslandLocalTimeUtility` 提供基于连续地面投影经纬度的全套本地时间计算
+  - Harmony 补丁覆盖了 `GenLocalDate` 的所有常用 `Map` 重载、`GenCelestial.CelestialSunGlow(Map, int)` 以及 `DateReadout.DateOnGUI`
+  - 空岛小地图内的日期、时钟、季节显示和天空亮度均随连续位置平滑过渡，不再随 tile 切换跳变
 
 ## 当前仍需继续开发的部分
 
@@ -220,26 +232,39 @@
 - 空岛研究目前只完成了尖塔线和云海 demo，节点观测泳道仍是占位框架。
 - 云海研究目前只有最小可用闭环，尚未接入更多研究项目、更多数据来源建筑或更细的调查反馈。
 - `气象监测仪` 目前使用原版 1x1 建筑贴图占位，尚未替换为专用美术资源。
-- 资源系统、空岛移动、平台规则、袭击平台、后续特殊任务尚未进入正式实现。
+- **空岛移动系统待完善：**
+  - 高度系统（高空巡航 / 低空悬停 / 交互高度）尚未实现
+  - 对地交互（docking / trading / assault）尚未接入
+  - 移动的成本与资源消耗尚未设计
+  - 空岛在世界地图上与其他世界对象的碰撞/规避规则尚未实现
+- **平滑本地时间系统待完善：**
+  - 室外温度连续化（`MapTemperature` 补丁）尚未实现
+  - 植物生长季、动物适温、天气权重等更深层生态系统仍按逻辑 tile 离散运作
+- 资源系统、平台规则、袭击平台、后续特殊任务尚未进入正式实现。
 - 语言文件、贴图资源、发布整理仍未完成。
 
 ## 下一步计划
 
-下一阶段进入“空岛研究与后续资源系统扩展”，优先顺序如下：
+下一阶段进入“空岛移动完善与资源系统扩展”，优先顺序如下：
 
-1. 扩展云海研究链
+1. 完善空岛移动系统的剩余模块
+- 实现离散高度状态（高空巡航 / 低空悬停 / 交互高度）。
+- 基于“地面投影 tile + 高度门槛”接入对地交互（贸易、 docking、任务接入等）。
+- 为移动补充资源/燃料消耗规则与成本模型。
+
+2. 完成平滑本地时间的最后一环
+- 实现 `MapTemperature.OutdoorTemp` / `SeasonalTemp` 的连续化补丁，让空岛地图的室外温度随连续位置平滑过渡。
+- 评估是否需要把植物生长季、动物适温等系统逐步纳入连续位置体系。
+
+3. 扩展云海研究链
 - 在 `云海垂钓` 之外继续补充至少一到两项真正消耗云海研究数据的科技。
 - 让云海泳道形成“数据积累 -> 调查 -> 研究解锁 -> 新玩法入口”的连续闭环。
 
-2. 扩展研究数据来源
+4. 扩展研究数据来源
 - 为云海、节点观测等泳道增加更多可调查对象，而不只依赖单一建筑。
 - 明确不同数据来源之间的节奏差异，例如持续积累型、手动推进型、事件奖励型。
 
-3. 完善空岛研究 UI
-- 继续优化空岛科技页的可读性，包括泳道辨识、当前项目提示、类型标记和状态反馈。
-- 评估是否需要在右侧项目卡或左下进度区继续补充更明确的视觉区分。
-
-4. 把研究系统接入后续资源与剧情
+5. 把研究系统接入后续资源与剧情
 - 为后续空岛资源链、特殊建筑、剧情推进和世界层玩法提供统一的研究数据入口。
 - 不在这一阶段过度扩展所有玩法，而是优先保证研究系统继续扩展时结构稳定。
 
@@ -247,3 +272,109 @@
 
 - 本文件记录“当前有效的实现方案”和“已经落地的结果”。
 - 若后续实现方向发生变化，应直接覆盖本文件对应段落，不保留历史备选路线。
+
+## 空岛移动系统
+
+### 总体架构
+
+- 空岛继续使用唯一的 `SkyIslandMapParent` 作为真实世界对象，不拆分成“固定殖民地 + 另一个移动图标”两套所有权。
+- 移动能力通过 `CompSkyIslandMovement`（`WorldObjectComp`）挂载到 `SkyIslandMapParent` 上，并在 `WorldObjects_SkyrimIslands.xml` 中通过 `CompProperties_SkyIslandMovement` 注册。
+- 地图、派系、任务引用、存档引用都继续挂在 `SkyIslandMapParent` 上；`CompSkyIslandMovement` 只负责序列化移动状态。
+
+### 连续移动机制
+
+- 移动不使用离散 tile 跳跃，而是基于**球面坐标插值**的连续位置系统。
+- 核心状态字段包括：
+  - `currentDirection`：当前朝向向量（用于插值）
+  - `currentAngularSpeed`：当前角速度
+  - `activeTargetSurfaceTile / activeTargetSkyTile`：当前段的目标地面/天空 tile
+  - `plannedSurfaceWaypoints / plannedSkyWaypoints`：规划的地面路径点与对应天空路径点（最多 10 个）
+- 移动状态机：
+  - `Idle`：待命，无移动
+  - `Accelerating`：向目标加速
+  - `Cruising`：达到巡航速度
+  - `Decelerating`：接近目标时减速
+  - `Interrupting`：玩家手动中断，减速回最近的锚定位置后停止
+- 加减速曲线通过路径进度百分比控制：前 `22%` 加速，后 `28%` 减速，中间维持巡航速度。
+- 逻辑 `Tile` 随 `currentDirection` 通过邻域爬山法实时更新，用于原版兼容、事件触发和存档；视觉位置则由 `currentDirection` 直接计算球面坐标。
+
+### 路径规划
+
+- `GameComponent_SkyIslandMovement` 作为高层协调器，管理“规划模式”。
+- 玩家通过空岛总控界面的“进入规划模式”按钮，或在空岛层选中空岛后操作，切换到大地的 `Surface` 层进行选点。
+- 规划模式下：
+  - 右键地面 tile 添加路径点
+  - 右键已有路径点可删除或在重叠位置新建
+  - ESC 退出规划并返回空岛层视角
+- 路径点存储在地表层，内部通过 `GetSkyProjectionTile` 映射到最近的天空层 tile。
+- 启动引擎后，空岛按顺序逐个抵达路径点，每到一个点自动停止并发送信件提示。
+
+### 世界图标与背景板
+
+- `WorldObjectDef` 启用了 `useDynamicDrawer`，空岛世界图标不再依赖静态网格 `Print`。
+- `SkyIslandMapParent.DrawPos` 和 `WorldCameraPosition` 都返回 `CompSkyIslandMovement.CurrentSkyWorldPosition`，因此：
+  - 世界地图上的空岛图标会随连续位置平滑移动
+  - 小地图背景世界的视角会随空岛移动实时变化
+- `WorldObject_SkyLayerVisibilityPatch` 确保当地表层被选中时，空岛世界对象仍然可见。
+
+### 渲染与界面
+
+- `SkyIslandMovementRenderUtility` 负责在世界地图上绘制：
+  - 当前位置与天空投影的配对标记
+  - 已规划路径点的配对标记
+  - 地面投影与天空层之间的连线
+  - 天空层路径点之间的弧形航线
+- `Window_SkyIslandControl`（空岛总控界面）提供“总控面板”和“移动状态”两个标签页：
+  - 左栏显示当前坐标、地面投影、移动状态、速度、ETA
+  - 移动状态页支持进入规划模式、清空路线、启动引擎、中断移动
+  - 下方路线摘要以列表形式展示当前位置与各路径点的地面对应
+- `Window_SkyIslandControlButton` 是一个常驻的右上角浮动按钮，用于快速打开/关闭总控界面。
+
+### 对应实现
+
+- `Source/World/CompSkyIslandMovement.cs`
+- `Source/World/CompProperties_SkyIslandMovement.cs`
+- `Source/World/GameComponent_SkyIslandMovement.cs`
+- `Source/World/SkyIslandMovementRenderUtility.cs`
+- `Source/UI/Window_SkyIslandControl.cs`
+- `Source/UI/Window_SkyIslandControlButton.cs`
+- `Source/UI/SkyIslandControlWindowUtility.cs`
+- `Source/UI/SkyIslandControlButtonDrawer.cs`
+- `Source/Patches/WorldInterface_SkyIslandMovementPatches.cs`
+- `Source/Patches/UIRoot_Play_SkyIslandControlButtonPatch.cs`
+- `Source/Patches/WorldObject_SkyLayerVisibilityPatch.cs`
+- `Source/SkyrimIslandsTextureCache.cs`
+- `1.6/Defs/WorldObjectDefs/WorldObjects_SkyrimIslands.xml`
+
+## 平滑本地时间系统
+
+### 设计目标
+
+- 空岛在穿越不同时区时，小地图中的本地时间、日期、季节和天空亮度应表现为连续平滑过渡，而不是随 `map.Tile` 的离散切换发生跳变。
+- 方案把“逻辑 tile”（用于原版兼容、事件、存档）与“连续时间位置”（用于显示和环境演算）明确拆分。
+
+### 连续位置来源
+
+- `CompSkyIslandMovement` 在移动过程中维护 `currentDirection`，并基于该方向计算 `CurrentSurfaceWorldPosition` 和 `CurrentSurfaceLongLat`。
+- `SkyIslandMapParent` 将这些连续经纬度暴露给外部系统。
+- `SkyIslandLocalTimeUtility.TryGetContinuousSurfaceLocation(Map, out Vector2 longLat)` 是统一入口：如果地图的父对象是 `SkyIslandMapParent`，则返回其连续地面投影经纬度；否则返回 false，让调用方回退到原版逻辑。
+
+### 已接入的原版系统
+
+- `GenLocalDate` 的常用 `Map` 重载全部被 Harmony Prefix 拦截，在命中空岛地图时路由到 `SkyIslandLocalTimeUtility`：
+  - `DayOfYear`、`HourOfDay`、`DayOfTwelfth`、`Twelfth`、`Season`、`Year`
+  - `DayOfSeason`、`DayOfQuadrum`、`DayTick`、`DayPercent`、`YearPercent`
+  - `HourInteger`、`HourFloat`
+- `GenCelestial.CelestialSunGlow(Map, int)` 同样被拦截，使用连续经纬度计算太阳光照强度。
+- `DateReadout.DateOnGUI(...)` 被完全接管，使用连续经纬度重绘日期、时钟和季节文本，其余地图继续走原版。
+- 由于 `SkyManager` 每帧都会读取 `GenLocalDate.DayPercent` 和 `GenCelestial.CurCelestialSunGlow`，天空亮度、阴影方向、水面受光都会自动随连续位置平滑变化，无需额外修改 `SkyManager`。
+
+### 尚未实现的扩展
+
+- `MapTemperature.OutdoorTemp` / `SeasonalTemp` 的连续化补丁尚未落地。原版温度不仅依赖经纬度，还包含 `tile.temperature`、季节振幅和按 tile 哈希的日随机扰动，需要专门设计插值策略。
+- 植物生长季、动物适温、天气权重等更深层生态逻辑仍基于离散 `map.Tile` 运作，后续按需评估是否扩展。
+
+### 对应实现
+
+- `Source/World/SkyIslandLocalTimeUtility.cs`
+- `Source/Patches/SkyIslandLocalTimePatches.cs`

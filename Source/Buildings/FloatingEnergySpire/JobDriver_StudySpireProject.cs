@@ -4,7 +4,7 @@ using SkyrimIslands.Research;
 using Verse;
 using Verse.AI;
 
-namespace SkyrimIslands.Quests.Spire
+namespace SkyrimIslands.Buildings.FloatingEnergySpire
 {
     public class JobDriver_StudySpireProject : JobDriver
     {

@@ -4,5 +4,6 @@ obj/
 .vs/
 .dotnet/
 .vscode/*.log
+.claude/
 1.6/Assemblies/*
 !1.6/Assemblies/Skyrim_Islands.dll
