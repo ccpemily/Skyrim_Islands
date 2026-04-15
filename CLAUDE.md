@@ -101,6 +101,7 @@ Thinking过程请使用中文。
 - **纹理缓存：** 所有静态 `Texture2D` 缓存必须放在 `SkyrimIslandsTextureCache` 中，并带有 `[StaticConstructorOnStartup]`。
 - **反射：** 在引入新的反射代码（如 `AccessTools`、`System.Reflection`）前请先询问用户。
 - **RimWorld 源码查找：** 优先使用 `rimsearcher MCP` 而非普通文件搜索。如果它返回 `Transport closed`，请停止并向用户报告。
+- **原版 Def 文件位置：** 相对于项目根目录为 `../../Data`，可用于查询原版 XML 定义（如 `PlanetLayerDef`、`WorldObjectDef` 等）。
 - **文本编码：** `.cs`、`.xml`、`.md` 和本地化文件均使用 UTF-8。
 - **Def 交叉引用：** 修改 XML 或 C# 后，请验证 `defName`、`Class`、`worldObjectClass`、`workerClass`、`compClass`、`layerType` 和 `DefOf` 字段在 C# 与 XML 之间保持一致。XML 中引用的 Mod 自有类型必须使用完全限定名（例如 `SkyrimIslands.World.SkyIslandMapParent`）。
 

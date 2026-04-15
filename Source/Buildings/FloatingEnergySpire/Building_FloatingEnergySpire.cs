@@ -15,7 +15,7 @@ namespace SkyrimIslands.Buildings.FloatingEnergySpire
         FullyRestarted
     }
 
-    public class Building_FloatingEnergySpire : Building
+    public class Building_FloatingEnergySpire : Building, ISkyResearchSource
     {
         private const int ResearchCooldownTicks = 3000;
 

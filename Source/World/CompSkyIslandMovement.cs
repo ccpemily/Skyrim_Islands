@@ -12,6 +12,10 @@ namespace SkyrimIslands.World
         private readonly SkyIslandWaypointPlanner waypointPlanner = new SkyIslandWaypointPlanner();
         private SkyIslandMovementDriver? driver;
 
+        private float departureAltitude = SkyIslandAltitude.DefaultAltitude;
+        private float targetAltitude = SkyIslandAltitude.DefaultAltitude;
+        private int currentGear = 1;
+
         private SkyIslandMapParent Owner => (SkyIslandMapParent)parent;
 
         public PlanetTile SurfaceProjectionTile
@@ -25,12 +29,16 @@ namespace SkyrimIslands.World
 
         public IReadOnlyList<PlanetTile> PlannedSurfaceWaypoints => waypointPlanner.SurfaceWaypoints;
         public IReadOnlyList<PlanetTile> PlannedSkyWaypoints => waypointPlanner.SkyWaypoints;
+        public IReadOnlyList<float> WaypointAltitudes => waypointPlanner.WaypointAltitudes;
         public bool HasPlannedRoute => waypointPlanner.HasRoute;
 
+        public int CurrentGear => currentGear;
         public bool IsCenteredOnCurrentTile => driver?.GetIsCenteredOnCurrentTile(surfaceProjectionTile) ?? true;
         public SkyIslandMapParent.SkyIslandMovementState MovementState => driver?.MovementState ?? SkyIslandMapParent.SkyIslandMovementState.Idle;
+        public SkyIslandMapParent.SkyIslandVerticalState VerticalState => driver?.VerticalState ?? SkyIslandMapParent.SkyIslandVerticalState.Holding;
         public bool IsMoveControlLocked => driver?.IsMoveControlLocked ?? false;
         public bool IsPreparingToDock => driver?.IsPreparingToDock ?? false;
+        public Vector3 CurrentDirection => driver?.CurrentDirection ?? Vector3.zero;
         public float CurrentSpeedTilesPerDay => driver?.CurrentSpeedTilesPerDay ?? 0f;
         public int? CurrentEtaTicks => driver?.CalculateEta();
         public Vector3 CurrentSkyWorldPosition => driver?.GetSkyWorldPosition(surfaceProjectionTile) ?? Vector3.zero;
@@ -62,9 +70,15 @@ namespace SkyrimIslands.World
             MovementTickOutput output = driver!.Tick(1, waypointPlanner, surfaceProjectionTile);
             surfaceProjectionTile = output.NewSurfaceProjectionTile;
 
+            if (MovementState != SkyIslandMapParent.SkyIslandMovementState.Idle)
+            {
+                Owner.Altitude = driver.CurrentAltitude;
+            }
+
             switch (output.Result)
             {
                 case MovementTickResult.Arrived:
+                    Owner.Altitude = driver.TargetAltitude;
                     SendArrivalLetter();
                     TryRemovePlannedSurfaceWaypointAt(0);
                     break;
@@ -78,19 +92,46 @@ namespace SkyrimIslands.World
         {
             base.PostExposeData();
             Scribe_Values.Look(ref surfaceProjectionTile, "surfaceProjectionTile", PlanetTile.Invalid);
+            Scribe_Values.Look(ref departureAltitude, "departureAltitude", SkyIslandAltitude.DefaultAltitude);
+            Scribe_Values.Look(ref targetAltitude, "targetAltitude", SkyIslandAltitude.DefaultAltitude);
+            Scribe_Values.Look(ref currentGear, "currentGear", 1);
+
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                if (departureAltitude > SkyIslandAltitude.MaxAltitude + 10f)
+                {
+                    departureAltitude = Mathf.Clamp(departureAltitude - SkyIslandAltitude.SurfaceRadius, SkyIslandAltitude.MinAltitude, SkyIslandAltitude.MaxAltitude);
+                }
+                if (targetAltitude > SkyIslandAltitude.MaxAltitude + 10f)
+                {
+                    targetAltitude = Mathf.Clamp(targetAltitude - SkyIslandAltitude.SurfaceRadius, SkyIslandAltitude.MinAltitude, SkyIslandAltitude.MaxAltitude);
+                }
+            }
             waypointPlanner.ExposeData();
             driver?.ExposeData();
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
+                waypointPlanner.MigrateLegacyAltitudes(SkyIslandAltitude.MaxAltitude, SkyIslandAltitude.SurfaceRadius, SkyIslandAltitude.MinAltitude);
+
                 EnsureWaypointProjectionCache();
                 EnsureSurfaceProjectionTile();
-                if (driver != null &&
-                    MovementState != SkyIslandMapParent.SkyIslandMovementState.Idle &&
-                    MovementState != SkyIslandMapParent.SkyIslandMovementState.Interrupting &&
-                    !driver.HasActiveTarget)
+
+                if (driver != null)
                 {
-                    driver.Reset();
+                    if (MovementState != SkyIslandMapParent.SkyIslandMovementState.Idle &&
+                        MovementState != SkyIslandMapParent.SkyIslandMovementState.Interrupting &&
+                        !driver.HasActiveTarget)
+                    {
+                        driver.Reset();
+                    }
+
+                    if (driver.DepartureAltitude == SkyIslandAltitude.DefaultAltitude &&
+                        driver.TargetAltitude == SkyIslandAltitude.DefaultAltitude &&
+                        (departureAltitude != SkyIslandAltitude.DefaultAltitude || targetAltitude != SkyIslandAltitude.DefaultAltitude))
+                    {
+                        driver.SetAltitudeContext(departureAltitude, targetAltitude);
+                    }
                 }
             }
         }
@@ -144,7 +185,7 @@ namespace SkyrimIslands.World
             return true;
         }
 
-        public bool TryAddPlannedSurfaceWaypoint(PlanetTile surfaceTile, bool allowConsecutiveDuplicate = false)
+        public bool TryAddPlannedSurfaceWaypoint(PlanetTile surfaceTile, float altitude, bool allowConsecutiveDuplicate = false)
         {
             if (!CanAddWaypointAt(surfaceTile))
             {
@@ -164,7 +205,7 @@ namespace SkyrimIslands.World
             }
 
             PlanetTile skyTile = GetSkyProjectionTile(surfaceTile);
-            return waypointPlanner.TryAdd(surfaceTile, skyTile);
+            return waypointPlanner.TryAdd(surfaceTile, skyTile, altitude);
         }
 
         public int MostRecentPlannedWaypointIndexAt(PlanetTile surfaceTile)
@@ -198,12 +239,23 @@ namespace SkyrimIslands.World
             }
 
             EnsureWaypointProjectionCache();
-            return driver!.Start(waypointPlanner.FirstSurfaceWaypoint, waypointPlanner.FirstSkyWaypoint);
+            departureAltitude = Owner.Altitude;
+            targetAltitude = waypointPlanner.FirstWaypointAltitude;
+            return driver!.Start(waypointPlanner.FirstSurfaceWaypoint, waypointPlanner.FirstSkyWaypoint, currentGear, departureAltitude, targetAltitude);
         }
 
         public bool PauseMovementPreview()
         {
             return driver!.Interrupt(parent.Tile, SurfaceProjectionTile);
+        }
+
+        public void SetGear(int gear)
+        {
+            currentGear = Mathf.Clamp(gear, 0, SkyIslandMovementConstants.Gears.Length - 1);
+            if (MovementState != SkyIslandMapParent.SkyIslandMovementState.Idle)
+            {
+                driver?.ChangeGear(currentGear);
+            }
         }
 
         public void EnsureWaypointProjectionCache()

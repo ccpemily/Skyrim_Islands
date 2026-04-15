@@ -37,7 +37,7 @@ namespace SkyrimIslands.Buildings.WeatherMonitor
                     return true;
                 }
 
-                return !Monitor.CanPerformInvestigation(pawn, project!, out _);
+                return !Monitor.CanPerformResearch(pawn, project!, out _);
             });
             investigate.tickIntervalAction = delegate(int delta)
             {

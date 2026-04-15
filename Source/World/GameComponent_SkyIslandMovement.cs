@@ -1,6 +1,6 @@
+using System.Collections.Generic;
 using RimWorld;
 using RimWorld.Planet;
-using System.Collections.Generic;
 using SkyrimIslands.MainTabs;
 using UnityEngine;
 using Verse;
@@ -11,6 +11,8 @@ namespace SkyrimIslands.World
     public class GameComponent_SkyIslandMovement : GameComponent
     {
         private SkyIslandMapParent? planningIsland;
+        private PlanetTile pendingWaypointTile = PlanetTile.Invalid;
+        private bool pendingAllowConsecutiveDuplicate;
 
         public GameComponent_SkyIslandMovement(Game game)
         {
@@ -45,6 +47,7 @@ namespace SkyrimIslands.World
             }
 
             planningIsland = island;
+            pendingWaypointTile = PlanetTile.Invalid;
 
             CameraJumper.TryShowWorld();
             Find.World.renderer.wantedMode = WorldRenderMode.Planet;
@@ -60,6 +63,7 @@ namespace SkyrimIslands.World
         {
             SkyIslandMapParent? island = planningIsland;
             planningIsland = null;
+            pendingWaypointTile = PlanetTile.Invalid;
 
             if (!returnToSkyLayer || island == null || island.Destroyed)
             {
@@ -156,7 +160,29 @@ namespace SkyrimIslands.World
                 return;
             }
 
-            TryAddWaypointFromPlanning(tile, false);
+            if (!planningIsland.CanAddWaypointAt(tile))
+            {
+                return;
+            }
+
+            pendingWaypointTile = tile;
+            pendingAllowConsecutiveDuplicate = false;
+            Event.current.Use();
+
+            Find.WindowStack.Add(new Dialog_SkyIslandAltitudeSelector(
+                SkyIslandAltitude.DefaultAltitude,
+                OnAltitudeSelected));
+        }
+
+        private void OnAltitudeSelected(float altitude)
+        {
+            if (planningIsland == null || !pendingWaypointTile.Valid)
+            {
+                return;
+            }
+
+            TryAddWaypointFromPlanning(pendingWaypointTile, altitude, pendingAllowConsecutiveDuplicate);
+            pendingWaypointTile = PlanetTile.Invalid;
         }
 
         private void ShowExistingWaypointMenu(PlanetTile tile, int existingIndex)
@@ -185,7 +211,11 @@ namespace SkyrimIslands.World
             {
                 options.Add(new FloatMenuOption("在重叠位置新建路径点", delegate
                 {
-                    TryAddWaypointFromPlanning(tile, true);
+                    pendingWaypointTile = tile;
+                    pendingAllowConsecutiveDuplicate = true;
+                    Find.WindowStack.Add(new Dialog_SkyIslandAltitudeSelector(
+                        planningIsland.Altitude,
+                        OnAltitudeSelected));
                 }));
             }
             else
@@ -196,7 +226,7 @@ namespace SkyrimIslands.World
             Find.WindowStack.Add(new FloatMenu(options));
         }
 
-        private void TryAddWaypointFromPlanning(PlanetTile tile, bool allowConsecutiveDuplicate)
+        private void TryAddWaypointFromPlanning(PlanetTile tile, float altitude, bool allowConsecutiveDuplicate)
         {
             if (planningIsland == null)
             {
@@ -215,7 +245,7 @@ namespace SkyrimIslands.World
                 return;
             }
 
-            if (planningIsland.TryAddPlannedSurfaceWaypoint(tile, allowConsecutiveDuplicate))
+            if (planningIsland.TryAddPlannedSurfaceWaypoint(tile, altitude, allowConsecutiveDuplicate))
             {
                 Find.WorldSelector.Select(planningIsland, false);
                 SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
@@ -232,10 +262,6 @@ namespace SkyrimIslands.World
             if (planningIsland != null)
             {
                 Find.WorldSelector.Select(planningIsland, false);
-                if (Event.current != null)
-                {
-                    Event.current.Use();
-                }
             }
         }
 
@@ -264,12 +290,20 @@ namespace SkyrimIslands.World
 
                 if (selectedLayer.Def == PlanetLayerDefOf.Surface)
                 {
+                    if (skipIsland == null && !Find.WorldSelector.IsSelected(island))
+                    {
+                        continue;
+                    }
                     SkyIslandMovementRenderUtility.DrawSurfaceRoutePreview(island);
                     continue;
                 }
 
                 if (selectedLayer == island.Tile.Layer)
                 {
+                    if (skipIsland == null && !Find.WorldSelector.IsSelected(island))
+                    {
+                        continue;
+                    }
                     SkyIslandMovementRenderUtility.DrawSkyRoutePreview(island);
                 }
             }

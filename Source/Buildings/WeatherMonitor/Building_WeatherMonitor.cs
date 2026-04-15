@@ -7,7 +7,7 @@ using Verse.AI;
 
 namespace SkyrimIslands.Buildings.WeatherMonitor
 {
-    public class Building_WeatherMonitor : Building
+    public class Building_WeatherMonitor : Building, ISkyResearchSource
     {
         private const int DataCapacityTicks = 60000;
         private const int DataGatherIntervalTicks = 250;
@@ -61,7 +61,7 @@ namespace SkyrimIslands.Buildings.WeatherMonitor
                    (inspectString.NullOrEmpty() ? string.Empty : "\n" + inspectString);
         }
 
-        public bool CanPerformInvestigation(Pawn pawn, SkyIslandResearchProjectDef project, out string reason)
+        public bool CanPerformResearch(Pawn pawn, SkyIslandResearchProjectDef project, out string reason)
         {
             reason = string.Empty;
 

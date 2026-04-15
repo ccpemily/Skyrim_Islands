@@ -15,7 +15,7 @@ namespace SkyrimIslands.MainTabs
 
         public Window_SkyIslandControlButton()
         {
-            layer = WindowLayer.GameUI;
+            layer = WindowLayer.Super;
             drawShadow = false;
             doWindowBackground = false;
             draggable = false;
@@ -61,7 +61,7 @@ namespace SkyrimIslands.MainTabs
             Widgets.DrawTextureFitted(iconRect, SkyrimIslandsTextureCache.WorldRoutePlannerTex, 1f, SkyrimIslandsTextureCache.SkyIslandControlButtonMat, 1f);
 
             TooltipHandler.TipRegion(buttonRect, "打开空岛总控界面");
-            if (Widgets.ButtonInvisible(buttonRect))
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && Mouse.IsOver(buttonRect))
             {
                 SkyIslandControlWindowUtility.ToggleControlWindow();
                 Event.current.Use();

@@ -32,7 +32,7 @@ namespace SkyrimIslands.Buildings.WeatherMonitor
                 return false;
             }
 
-            return monitor.CanPerformInvestigation(pawn, project!, out _);
+            return monitor.CanPerformResearch(pawn, project!, out _);
         }
 
         public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)

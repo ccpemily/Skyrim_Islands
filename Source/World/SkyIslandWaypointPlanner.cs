@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RimWorld.Planet;
+using UnityEngine;
 using Verse;
 
 namespace SkyrimIslands.World
@@ -8,25 +9,30 @@ namespace SkyrimIslands.World
     {
         private List<PlanetTile> surfaceWaypoints = new List<PlanetTile>();
         private List<PlanetTile> skyWaypoints = new List<PlanetTile>();
+        private List<float> waypointAltitudes = new List<float>();
 
         public IReadOnlyList<PlanetTile> SurfaceWaypoints => surfaceWaypoints;
         public IReadOnlyList<PlanetTile> SkyWaypoints => skyWaypoints;
+        public IReadOnlyList<float> WaypointAltitudes => waypointAltitudes;
         public bool HasRoute => surfaceWaypoints.Count > 0;
         public int Count => surfaceWaypoints.Count;
 
         public PlanetTile FirstSurfaceWaypoint => surfaceWaypoints.Count > 0 ? surfaceWaypoints[0] : PlanetTile.Invalid;
         public PlanetTile FirstSkyWaypoint => skyWaypoints.Count > 0 ? skyWaypoints[0] : PlanetTile.Invalid;
+        public float FirstWaypointAltitude => waypointAltitudes.Count > 0 ? waypointAltitudes[0] : SkyIslandAltitude.DefaultAltitude;
 
         public void ExposeData()
         {
             Scribe_Collections.Look(ref surfaceWaypoints, "surfaceWaypoints", LookMode.Value);
             Scribe_Collections.Look(ref skyWaypoints, "skyWaypoints", LookMode.Value);
+            Scribe_Collections.Look(ref waypointAltitudes, "waypointAltitudes", LookMode.Value);
 
             surfaceWaypoints ??= new List<PlanetTile>();
             skyWaypoints ??= new List<PlanetTile>();
+            waypointAltitudes ??= new List<float>();
         }
 
-        public bool TryAdd(PlanetTile surfaceTile, PlanetTile skyTile)
+        public bool TryAdd(PlanetTile surfaceTile, PlanetTile skyTile, float altitude)
         {
             if (!skyTile.Valid)
             {
@@ -35,6 +41,7 @@ namespace SkyrimIslands.World
 
             surfaceWaypoints.Add(surfaceTile);
             skyWaypoints.Add(skyTile);
+            waypointAltitudes.Add(altitude);
             return true;
         }
 
@@ -50,6 +57,10 @@ namespace SkyrimIslands.World
             {
                 skyWaypoints.RemoveAt(index);
             }
+            if (index < waypointAltitudes.Count)
+            {
+                waypointAltitudes.RemoveAt(index);
+            }
 
             return true;
         }
@@ -58,6 +69,7 @@ namespace SkyrimIslands.World
         {
             surfaceWaypoints.Clear();
             skyWaypoints.Clear();
+            waypointAltitudes.Clear();
         }
 
         public int MostRecentIndexAt(PlanetTile surfaceTile)
@@ -89,6 +101,24 @@ namespace SkyrimIslands.World
             {
                 surfaceWaypoints.Clear();
                 skyWaypoints.Clear();
+                waypointAltitudes.Clear();
+            }
+        }
+
+        public void MigrateLegacyAltitudes(float maxAltitude, float surfaceRadius, float minAltitude)
+        {
+            for (int i = 0; i < waypointAltitudes.Count; i++)
+            {
+                float alt = waypointAltitudes[i];
+                if (alt > maxAltitude + 10f)
+                {
+                    alt = Mathf.Clamp(alt - surfaceRadius, minAltitude, maxAltitude);
+                    waypointAltitudes[i] = alt;
+                }
+                else if (alt > maxAltitude)
+                {
+                    waypointAltitudes[i] = maxAltitude;
+                }
             }
         }
     }

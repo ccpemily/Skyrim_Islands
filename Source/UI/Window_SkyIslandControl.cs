@@ -19,6 +19,7 @@ namespace SkyrimIslands.MainTabs
         private readonly List<TabRecord> tabs = new List<TabRecord>();
         private Vector2 routeScrollPosition;
         private float routeViewHeight = 240f;
+        private bool isDraggingMinimap;
         private static SkyIslandTab curTab = SkyIslandTab.Overview;
 
         public override Vector2 InitialSize => new Vector2((float)UI.screenWidth, 620f);
@@ -62,11 +63,13 @@ namespace SkyrimIslands.MainTabs
                 return;
             }
 
+            const float barWidth = 28f;
             float leftWidth = Mathf.Max(270f, rect.width * 0.22f);
-            Rect leftRect = new Rect(rect.x, rect.y, leftWidth, rect.height);
+            Rect barRect = new Rect(rect.x, rect.y, barWidth, rect.height);
+            Rect leftRect = new Rect(rect.x + barWidth, rect.y, leftWidth, rect.height);
 
             const float tabHeight = 32f;
-            Rect rightRect = new Rect(leftRect.xMax + 10f, rect.y, rect.width - leftRect.width - 10f, rect.height);
+            Rect rightRect = new Rect(leftRect.xMax + 10f, rect.y, rect.width - leftRect.width - barWidth - 10f, rect.height);
             Rect menuRect = rightRect;
             menuRect.yMin += tabHeight;
             Widgets.DrawMenuSection(menuRect);
@@ -75,6 +78,7 @@ namespace SkyrimIslands.MainTabs
             Rect rightInnerRect = menuRect.ContractedBy(10f);
             Rect contentRect = new Rect(rightInnerRect.x + 8f, rightInnerRect.y + 4f, rightInnerRect.width - 16f, rightInnerRect.height - 4f);
 
+            DrawAltitudeBar(barRect, island);
             DrawSidebar(leftRect, island);
             TabDrawer.DrawTabs(tabBaseRect, tabs, 180f);
 
@@ -135,6 +139,30 @@ namespace SkyrimIslands.MainTabs
             GUI.color = Color.white;
         }
 
+        private static void DrawAltitudeBar(Rect rect, SkyIslandMapParent island)
+        {
+            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f, 0.9f));
+
+            float minY = rect.yMax - (SkyIslandAltitude.MinAltitude / SkyIslandAltitude.OrbitHeight) * rect.height;
+            float maxY = rect.yMax - (SkyIslandAltitude.MaxAltitude / SkyIslandAltitude.OrbitHeight) * rect.height;
+            Rect validRect = new Rect(rect.x + 4f, maxY, rect.width - 8f, Mathf.Max(2f, minY - maxY));
+            Widgets.DrawBoxSolid(validRect, new Color(0.22f, 0.45f, 0.6f, 0.5f));
+
+            float markerY = rect.yMax - (Mathf.Clamp(island.Altitude, 0f, SkyIslandAltitude.OrbitHeight) / SkyIslandAltitude.OrbitHeight) * rect.height;
+            Rect markerRect = new Rect(rect.x + 2f, markerY - 1.5f, rect.width - 4f, 3f);
+            Widgets.DrawBoxSolid(markerRect, Color.white);
+
+            Widgets.DrawBox(rect);
+
+            TooltipHandler.TipRegion(rect, new TipSignal(() => BuildAltitudeTooltip(island), 9001001));
+        }
+
+        private static string BuildAltitudeTooltip(SkyIslandMapParent island)
+        {
+            float absoluteRadius = SkyIslandAltitude.SurfaceRadius + island.Altitude;
+            return $"当前高度: {island.Altitude:F1} (半径 {absoluteRadius:F1})\n可用范围: {SkyIslandAltitude.MinAltitude:F1} ~ {SkyIslandAltitude.MaxAltitude:F1}\n轨道层顶: {SkyIslandAltitude.OrbitHeight:F0} (半径 {SkyIslandAltitude.OrbitLayerRadius:F0})";
+        }
+
         private static string FormatCoordinates(PlanetTile tile)
         {
             if (!tile.Valid)
@@ -180,38 +208,176 @@ namespace SkyrimIslands.MainTabs
             Text.Font = GameFont.Small;
             Widgets.Label(new Rect(rect.x, rect.y, rect.width, 28f), "移动状态");
 
-            DrawMovementButtons(new Rect(rect.x, rect.y + 34f, rect.width, 72f), island);
+            const float minimapSize = 260f;
+            const float gearBarHeight = 32f;
+            float rightColumnX = rect.x + minimapSize + 20f;
+            float rightColumnWidth = rect.width - minimapSize - 20f;
 
-            float infoY = rect.y + 116f;
-            Widgets.Label(new Rect(rect.x, infoY, rect.width, 24f), "当前位置: " + FormatCoordinates(island.CurrentSurfaceLongLat));
-            Widgets.Label(new Rect(rect.x, infoY + 24f, rect.width, 24f), "当前状态: " + GetMovementStateLabel(island));
-            Widgets.Label(new Rect(rect.x, infoY + 48f, rect.width, 24f), "待执行路径点数量: " + island.PlannedSurfaceWaypoints.Count);
+            Rect minimapRect = new Rect(rect.x, rect.y + 34f, minimapSize, minimapSize);
+            HandleMinimapInput(minimapRect);
+            SkyIslandMinimapUtility.DrawMinimap(minimapRect, island);
+            DrawMinimapResetButton(minimapRect);
+
+            Rect gearBarRect = new Rect(rect.x, minimapRect.yMax + 10f, minimapSize, gearBarHeight);
+            DrawGearBar(gearBarRect, island);
+
+            DrawMovementButtons(new Rect(rightColumnX, rect.y + 34f, rightColumnWidth, 72f), island);
+
+            float infoY = rect.y + 118f;
+            Widgets.Label(new Rect(rightColumnX, infoY, rightColumnWidth, 24f), "当前位置: " + FormatCoordinates(island.CurrentSurfaceLongLat));
+            Widgets.Label(new Rect(rightColumnX, infoY + 24f, rightColumnWidth, 24f), "当前状态: " + GetMovementStateLabel(island));
+            Widgets.Label(new Rect(rightColumnX, infoY + 48f, rightColumnWidth, 24f), "待执行路径点数量: " + island.PlannedSurfaceWaypoints.Count);
 
             string nextWaypoint = island.PlannedSurfaceWaypoints.Count > 0
                 ? FormatCoordinates(island.PlannedSurfaceWaypoints[0])
                 : "无";
-            Widgets.Label(new Rect(rect.x, infoY + 72f, rect.width, 24f), "下一路径点: " + nextWaypoint);
+            Widgets.Label(new Rect(rightColumnX, infoY + 72f, rightColumnWidth, 24f), "下一路径点: " + nextWaypoint);
 
-            Rect routeRect = new Rect(rect.x, rect.y + 220f, rect.width, rect.height - 220f);
+            float routeY = Mathf.Max(infoY + 110f, gearBarRect.yMax + 14f);
+            Rect routeRect = new Rect(rect.x, routeY, rect.width, rect.height - routeY);
             DrawRoutePanel(routeRect, island);
+        }
+
+        private void HandleMinimapInput(Rect minimapRect)
+        {
+            Event e = Event.current;
+            if (e.type == EventType.MouseDown && e.button == 1 && minimapRect.Contains(e.mousePosition))
+            {
+                isDraggingMinimap = true;
+                e.Use();
+            }
+            else if (e.type == EventType.MouseDrag && isDraggingMinimap)
+            {
+                SkyIslandMinimapUtility.MinimapYaw += e.delta.x * 0.01f;
+                e.Use();
+            }
+            else if (e.type == EventType.MouseUp && isDraggingMinimap)
+            {
+                isDraggingMinimap = false;
+                e.Use();
+            }
+        }
+
+        private static void DrawMinimapResetButton(Rect minimapRect)
+        {
+            Rect buttonRect = new Rect(minimapRect.x + 4f, minimapRect.y + 4f, 26f, 24f);
+            if (Widgets.ButtonText(buttonRect, "\u21ba"))
+            {
+                SkyIslandMinimapUtility.ResetYaw();
+                SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
+            }
         }
 
         private static string GetMovementStateLabel(SkyIslandMapParent island)
         {
-            if (island.IsPreparingToDock)
-            {
-                return "准备泊入";
-            }
-
-            return island.MovementState switch
+            string horizontal = island.MovementState switch
             {
                 SkyIslandMapParent.SkyIslandMovementState.Idle => "待命",
                 SkyIslandMapParent.SkyIslandMovementState.Accelerating => "加速中",
                 SkyIslandMapParent.SkyIslandMovementState.Cruising => "巡航中",
                 SkyIslandMapParent.SkyIslandMovementState.Decelerating => "减速中",
+                SkyIslandMapParent.SkyIslandMovementState.Docking => "泊入中",
                 SkyIslandMapParent.SkyIslandMovementState.Interrupting => "中断回锚中",
                 _ => "未知"
             };
+
+            string vertical = island.VerticalState switch
+            {
+                SkyIslandMapParent.SkyIslandVerticalState.Ascending => "上升中",
+                SkyIslandMapParent.SkyIslandVerticalState.Descending => "下降中",
+                SkyIslandMapParent.SkyIslandVerticalState.Holding => "维持高度",
+                _ => "维持高度"
+            };
+
+            return $"{horizontal}（{vertical}）";
+        }
+
+        private static void DrawGearBar(Rect rect, SkyIslandMapParent island)
+        {
+            Widgets.DrawBoxSolidWithOutline(rect, new Color(0.08f, 0.08f, 0.08f, 0.9f), new Color(0.35f, 0.35f, 0.35f, 0.5f), 1);
+
+            float segmentWidth = rect.width / 5f;
+            bool isIdle = island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Idle;
+            string[] gearLabels = { "前进一", "前进二", "前进三", "前进四" };
+
+            for (int i = 0; i < 5; i++)
+            {
+                bool isInterrupt = i == 0;
+                bool isSelected = isInterrupt
+                    ? isIdle
+                    : (!isIdle && island.CurrentGear == i - 1);
+
+                bool canInteract;
+                if (isInterrupt)
+                {
+                    canInteract = island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Accelerating ||
+                                  island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Cruising ||
+                                  island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Decelerating ||
+                                  island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Docking;
+                }
+                else
+                {
+                    canInteract = isIdle ||
+                                  island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Accelerating ||
+                                  island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Cruising;
+                }
+
+                Rect segRect = new Rect(rect.x + i * segmentWidth, rect.y, segmentWidth, rect.height);
+
+                Color lineColor;
+                float lineThickness;
+
+                if (isInterrupt)
+                {
+                    lineColor = isSelected
+                        ? new Color(1f, 0.15f, 0.15f, 1f)
+                        : new Color(0.8f, 0.1f, 0.1f, canInteract ? 0.85f : 0.35f);
+                    lineThickness = isSelected ? 5f : 3f;
+                }
+                else
+                {
+                    lineColor = isSelected
+                        ? new Color(1f, 1f, 1f, 1f)
+                        : new Color(0.75f, 0.75f, 0.75f, canInteract ? 0.85f : 0.35f);
+                    lineThickness = isSelected ? 4f : 2f;
+                }
+
+                float centerX = segRect.center.x;
+                float lineTop = segRect.y + segRect.height * 0.22f;
+                float lineBottom = segRect.y + segRect.height * 0.78f;
+
+                Widgets.DrawLine(
+                    new Vector2(centerX, lineTop),
+                    new Vector2(centerX, lineBottom),
+                    lineColor,
+                    lineThickness);
+
+                if (Mouse.IsOver(segRect))
+                {
+                    Widgets.DrawBoxSolid(segRect, new Color(1f, 1f, 1f, 0.06f));
+                }
+
+                string tooltip = isInterrupt ? "中断移动" : gearLabels[i - 1];
+                TooltipHandler.TipRegion(segRect, new TipSignal(tooltip, 3000000 + i));
+
+                if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && Mouse.IsOver(segRect) && canInteract)
+                {
+                    if (isInterrupt)
+                    {
+                        bool changed = island.PauseMovementPreview();
+                        if (changed)
+                        {
+                            SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+                        }
+                    }
+                    else
+                    {
+                        island.SetGear(i - 1);
+                        SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+                    }
+                    Event.current.Use();
+                }
+            }
         }
 
         private static void DrawMovementButtons(Rect rect, SkyIslandMapParent island)
@@ -221,7 +387,6 @@ namespace SkyrimIslands.MainTabs
             Rect topLeft = new Rect(rect.x, rect.y, buttonWidth, buttonHeight);
             Rect topRight = new Rect(topLeft.xMax + 12f, rect.y, buttonWidth, buttonHeight);
             Rect bottomLeft = new Rect(rect.x, rect.y + buttonHeight + 10f, buttonWidth, buttonHeight);
-            Rect bottomRight = new Rect(bottomLeft.xMax + 12f, bottomLeft.y, buttonWidth, buttonHeight);
 
             GameComponent_SkyIslandMovement? movement = Current.Game?.GetComponent<GameComponent_SkyIslandMovement>();
             bool controlsLocked = island.IsMoveControlLocked;
@@ -268,23 +433,6 @@ namespace SkyrimIslands.MainTabs
                 }
             }
             GUI.color = Color.white;
-
-            bool canInterrupt = island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Accelerating ||
-                                island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Cruising ||
-                                island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Decelerating;
-            if (!canInterrupt)
-            {
-                GUI.color = Color.gray;
-            }
-            if (Widgets.ButtonText(bottomRight, "中断移动") && canInterrupt)
-            {
-                bool changed = island.PauseMovementPreview();
-                if (changed)
-                {
-                    SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
-                }
-            }
-            GUI.color = Color.white;
         }
 
         private void DrawRoutePanel(Rect rect, SkyIslandMapParent island)
@@ -300,14 +448,15 @@ namespace SkyrimIslands.MainTabs
             Widgets.BeginScrollView(outRect, ref routeScrollPosition, viewRect);
 
             float y = 0f;
-            DrawRouteEntry(new Rect(0f, y, viewRect.width, 62f), "当前位置", island.SurfaceProjectionTile, island.Tile);
-            y += 68f;
+            DrawRouteEntry(new Rect(0f, y, viewRect.width, 78f), "当前位置", island.SurfaceProjectionTile, island.Tile, island.Altitude);
+            y += 84f;
 
             for (int i = 0; i < island.PlannedSurfaceWaypoints.Count; i++)
             {
                 string label = $"路径点 {i + 1}";
-                DrawRouteEntry(new Rect(0f, y, viewRect.width, 62f), label, island.PlannedSurfaceWaypoints[i], island.PlannedSkyWaypoints[i]);
-                y += 68f;
+                float waypointAltitude = island.WaypointAltitudes.Count > i ? island.WaypointAltitudes[i] : SkyIslandAltitude.DefaultAltitude;
+                DrawRouteEntry(new Rect(0f, y, viewRect.width, 78f), label, island.PlannedSurfaceWaypoints[i], island.PlannedSkyWaypoints[i], waypointAltitude);
+                y += 84f;
             }
 
             if (!island.HasPlannedRoute)
@@ -322,10 +471,10 @@ namespace SkyrimIslands.MainTabs
             Widgets.EndScrollView();
         }
 
-        private static void DrawRouteEntry(Rect rect, string label, PlanetTile surfaceTile, PlanetTile skyTile)
+        private static void DrawRouteEntry(Rect rect, string label, PlanetTile surfaceTile, PlanetTile skyTile, float altitude)
         {
             Rect rowRect = rect;
-            rowRect.height = Mathf.Max(rowRect.height, 62f);
+            rowRect.height = Mathf.Max(rowRect.height, 78f);
             Widgets.DrawLightHighlight(rowRect);
 
             Rect inner = rowRect.ContractedBy(6f);
@@ -333,7 +482,8 @@ namespace SkyrimIslands.MainTabs
 
             GUI.color = Color.gray;
             Widgets.Label(new Rect(inner.x, inner.y + 20f, inner.width, 22f), "地面: " + FormatCoordinates(surfaceTile));
-            Widgets.Label(new Rect(inner.x, inner.y + 38f, inner.width, 22f), "空岛: " + FormatCoordinates(skyTile));
+            Widgets.Label(new Rect(inner.x, inner.y + 36f, inner.width, 22f), "空岛: " + FormatCoordinates(skyTile));
+            Widgets.Label(new Rect(inner.x, inner.y + 52f, inner.width, 22f), "高度: " + altitude.ToString("F1"));
             GUI.color = Color.white;
         }
     }

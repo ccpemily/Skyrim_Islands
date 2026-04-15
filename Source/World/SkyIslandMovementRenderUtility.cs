@@ -7,9 +7,9 @@ namespace SkyrimIslands.World
 {
     public static class SkyIslandMovementRenderUtility
     {
-        private const int MinArcSegments = 8;
-        private const int MaxArcSegments = 48;
-        private const float ArcSegmentAngle = 0.08f;
+        private const int MinArcSegments = 4;
+        private const int MaxArcSegments = 20;
+        private const float ArcSegmentAngle = 0.14f;
         private const float ArcBulgeFactor = 0.22f;
         private const float ArcBulgeMax = 1.75f;
 
@@ -65,8 +65,6 @@ namespace SkyrimIslands.World
                 return;
             }
 
-            island.EnsureWaypointProjectionCache();
-
             PlanetTile currentSurfaceTile = island.SurfaceProjectionTile;
             if (!currentSurfaceTile.Valid)
             {
@@ -102,18 +100,20 @@ namespace SkyrimIslands.World
                     continue;
                 }
 
+                float waypointAltitude = island.WaypointAltitudes.Count > i ? island.WaypointAltitudes[i] : SkyIslandAltitude.DefaultAltitude;
+
                 if (previewMode == PreviewMode.SurfaceWithProjection)
                 {
-                    DrawProjectionPair(surfaceTile, skyTile, false);
+                    DrawProjectionPair(surfaceTile, skyTile, waypointAltitude, false);
                 }
                 else
                 {
                     DrawMarker(surfaceTile, WaypointSurfaceMarkerMat, WaypointMarkerSize, SurfaceMarkerAltitude);
-                    DrawMarker(skyTile, WaypointSkyMarkerMat, WaypointMarkerSize, SkyMarkerAltitude);
-                    DrawProjectionLine(surfaceTile, skyTile, false);
+                    DrawMarker(GetSkyWaypointBasePos(skyTile, waypointAltitude), WaypointSkyMarkerMat, WaypointMarkerSize, SkyMarkerAltitude);
+                    DrawProjectionLine(surfaceTile, skyTile, waypointAltitude, false);
                 }
 
-                Vector3 waypointSkyPos = GetWorldPos(skyTile, PathLineAltitude);
+                Vector3 waypointSkyPos = OffsetAlongNormal(GetSkyWaypointBasePos(skyTile, waypointAltitude), PathLineAltitude);
                 DrawArcBetween(previousSkyPos, waypointSkyPos, PathLineMat, 1.15f);
                 previousSkyPos = waypointSkyPos;
             }
@@ -133,6 +133,13 @@ namespace SkyrimIslands.World
             DrawProjectionLine(surfaceTile, skyTile, isCurrent);
         }
 
+        private static void DrawProjectionPair(PlanetTile surfaceTile, PlanetTile skyTile, float waypointAltitude, bool isCurrent)
+        {
+            DrawMarker(surfaceTile, isCurrent ? CurrentSurfaceMarkerMat : WaypointSurfaceMarkerMat, isCurrent ? CurrentMarkerSize : WaypointMarkerSize, SurfaceMarkerAltitude);
+            DrawMarker(GetSkyWaypointBasePos(skyTile, waypointAltitude), isCurrent ? CurrentSkyMarkerMat : WaypointSkyMarkerMat, isCurrent ? CurrentMarkerSize : WaypointMarkerSize, SkyMarkerAltitude);
+            DrawProjectionLine(surfaceTile, skyTile, waypointAltitude, isCurrent);
+        }
+
         private static void DrawProjectionLine(Vector3 surfacePos, Vector3 skyPos, bool isCurrent)
         {
             Vector3 surfaceLinePos = OffsetAlongNormal(surfacePos, SurfaceMarkerAltitude);
@@ -145,6 +152,20 @@ namespace SkyrimIslands.World
             Vector3 surfaceLinePos = GetWorldPos(surfaceTile, SurfaceMarkerAltitude);
             Vector3 skyLinePos = GetWorldPos(skyTile, SkyMarkerAltitude);
             GenDraw.DrawWorldLineBetween(surfaceLinePos, skyLinePos, ProjectionLineMat, isCurrent ? 0.85f : 0.65f);
+        }
+
+        private static void DrawProjectionLine(PlanetTile surfaceTile, PlanetTile skyTile, float waypointAltitude, bool isCurrent)
+        {
+            Vector3 surfaceLinePos = GetWorldPos(surfaceTile, SurfaceMarkerAltitude);
+            Vector3 skyLinePos = OffsetAlongNormal(GetSkyWaypointBasePos(skyTile, waypointAltitude), SkyMarkerAltitude);
+            GenDraw.DrawWorldLineBetween(surfaceLinePos, skyLinePos, ProjectionLineMat, isCurrent ? 0.85f : 0.65f);
+        }
+
+        private static Vector3 GetSkyWaypointBasePos(PlanetTile skyTile, float waypointAltitude)
+        {
+            Vector3 direction = Find.WorldGrid.GetTileCenter(skyTile).normalized;
+            float radius = SkyIslandAltitude.SurfaceRadius + waypointAltitude;
+            return skyTile.Layer.Origin + direction * radius;
         }
 
         private static void DrawMarker(Vector3 worldPosition, Material material, float sizeFactor, float altitude)

@@ -2,15 +2,32 @@ namespace SkyrimIslands.World
 {
     public static class SkyIslandMovementConstants
     {
-        public const int TicksPerTileDistance = 80;
-        public const int TicksPerTileDistanceSlow = 2500;
+        public const float HoursToTicks = 2500f;
         public const float AnchorSnapDotThreshold = 0.9999995f;
         public const float ArrivalAngleTolerance = 0.00005f;
-        public const float PathAccelerationDistanceFactor = 0.22f;
-        public const float PathDecelerationDistanceFactor = 0.28f;
-        public const float PathMinSpeedFactor = 0.03f;
-        public const int FinalApproachTicks = 8;
-        public const int InterruptionMinTicks = 24;
-        public const int InterruptionDecelerationTicks = 16;
+        public const float InterruptionMinTicks = 24f;
+        public const float VerticalSpeedKmPerHour = 1f;
+        public const float DockDistanceThreshold = 1f;
+        public const float DockDurationHours = 2f;
+
+        public static readonly GearProfile[] Gears = new GearProfile[]
+        {
+            new GearProfile(2f, 1f),
+            new GearProfile(5f, 1.5f),
+            new GearProfile(10f, 2f),
+            new GearProfile(20f, 3f)
+        };
+    }
+
+    public readonly struct GearProfile
+    {
+        public readonly float MaxSpeedTilesPerHour;
+        public readonly float AccelerationTilesPerHourSq;
+
+        public GearProfile(float maxSpeedTilesPerHour, float accelerationTilesPerHourSq)
+        {
+            MaxSpeedTilesPerHour = maxSpeedTilesPerHour;
+            AccelerationTilesPerHourSq = accelerationTilesPerHourSq;
+        }
     }
 }

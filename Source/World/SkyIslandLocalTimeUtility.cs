@@ -191,15 +191,19 @@ namespace SkyrimIslands.World
 
             if (Mouse.IsOver(dateRect))
             {
-                string tooltip = "DateReadoutTip".Translate(
-                    GenDate.DaysPassed,
-                    15,
-                    season.LabelCap(),
-                    15,
-                    GenDate.Quadrum(ticksAbs, longLat.x).Label(),
-                    BuildQuadrumTooltip(longLat.y));
-                TooltipHandler.TipRegion(dateRect, new TipSignal(tooltip, 86423));
+                TooltipHandler.TipRegion(dateRect, new TipSignal(() => BuildDateReadoutTip(ticksAbs, season, longLat), 86423));
             }
+        }
+
+        private static string BuildDateReadoutTip(int ticksAbs, Season season, Vector2 longLat)
+        {
+            return "DateReadoutTip".Translate(
+                GenDate.DaysPassed,
+                15,
+                season.LabelCap(),
+                15,
+                GenDate.Quadrum(ticksAbs, longLat.x).Label(),
+                BuildQuadrumTooltip(longLat.y));
         }
 
         private static string FormatHour12(int hour)

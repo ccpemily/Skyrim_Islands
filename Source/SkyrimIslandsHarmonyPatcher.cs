@@ -1,4 +1,5 @@
 using HarmonyLib;
+using SkyrimIslands.Patches;
 using Verse;
 
 namespace SkyrimIslands
@@ -10,7 +11,9 @@ namespace SkyrimIslands
 
         static SkyrimIslandsHarmonyPatcher()
         {
-            new Harmony(HarmonyId).PatchAll();
+            Harmony harmony = new Harmony(HarmonyId);
+            harmony.PatchAll();
+            SkyIslandLocalTimePatchRegistry.Apply(harmony);
             Log.Message("[Skyrim Islands] Harmony patches applied.");
         }
     }
