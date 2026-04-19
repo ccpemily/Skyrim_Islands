@@ -4,7 +4,7 @@
   <WeatherDef>
     <defName>SkyrimIslands_Clear</defName>
     <label>碧空</label>
-    <description>A calm, high-altitude sky above the cloud layer.</description>
+    <description>平流层通常不会受天气干扰，艳阳高照在这里是一种常态。</description>
     <repeatable>true</repeatable>
     <favorability>Good</favorability>
     <perceivePriority>0</perceivePriority>
@@ -40,7 +40,7 @@
   <WeatherDef>
     <defName>SkyrimIslands_Windy</defName>
     <label>强风</label>
-    <description>Strong and steady winds sweep above the cloud sea.</description>
+    <description>季风带吹出的强风在云海之上呼啸而过。</description>
     <repeatable>true</repeatable>
     <favorability>Neutral</favorability>
     <perceivePriority>0.4</perceivePriority>
@@ -51,6 +51,44 @@
     </ambientSounds>
     <skyColorsDay>
       <sky>(0.88,0.93,0.99)</sky>
+      <shadow>(0.78,0.81,0.87)</shadow>
+      <overlay>(0.94,0.96,0.99)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsDay>
+    <skyColorsDusk>
+      <sky>(0.72,0.81,0.95)</sky>
+      <shadow>(0.88,0.90,0.94)</shadow>
+      <overlay>(0.78,0.82,0.90)</overlay>
+      <saturation>0.98</saturation>
+    </skyColorsDusk>
+    <skyColorsNightEdge>
+      <sky>(0.38,0.47,0.60)</sky>
+      <shadow>(0.88,0.88,0.92)</shadow>
+      <overlay>(0.52,0.56,0.64)</overlay>
+      <saturation>0.98</saturation>
+    </skyColorsNightEdge>
+    <skyColorsNightMid>
+      <sky>(0.32,0.40,0.52)</sky>
+      <shadow>(0.84,0.84,0.88)</shadow>
+      <overlay>(0.48,0.52,0.60)</overlay>
+      <saturation>0.98</saturation>
+    </skyColorsNightMid>
+  </WeatherDef>
+
+  <WeatherDef>
+    <defName>SkyrimIslands_WindySpecial</defName>
+    <label>灵风</label>
+    <description>富含某种灵能物质的空气笼罩了这片区域。</description>
+    <repeatable>true</repeatable>
+    <favorability>Neutral</favorability>
+    <perceivePriority>0.4</perceivePriority>
+    <windSpeedFactor>1.35</windSpeedFactor>
+    <windSpeedOffset>0.25</windSpeedOffset>
+    <ambientSounds>
+      <li>Ambient_Wind_Storm</li>
+    </ambientSounds>
+    <skyColorsDay>
+      <sky>(0.78,0.93,0.89)</sky>
       <shadow>(0.78,0.81,0.87)</shadow>
       <overlay>(0.94,0.96,0.99)</overlay>
       <saturation>1.0</saturation>

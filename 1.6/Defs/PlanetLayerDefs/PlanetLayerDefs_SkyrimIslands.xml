@@ -13,7 +13,7 @@
     <onlyAllowWhitelistedArrivals>true</onlyAllowWhitelistedArrivals>
     <onlyAllowWhitelistedArrivalModes>true</onlyAllowWhitelistedArrivalModes>
     <viewGizmoTexPath>UI/Commands/ViewOrbit</viewGizmoTexPath>
-    <viewGizmoTooltip>View floating sky islands above the planet.</viewGizmoTooltip>
+    <viewGizmoTooltip>查看平流层和可能漂浮在其中的浮空岛屿。</viewGizmoTooltip>
     <canFormCaravans>false</canFormCaravans>
     <isSpace>true</isSpace>
     <ignoreNoBuildArea>true</ignoreNoBuildArea>
@@ -47,7 +47,7 @@
 
   <PlanetLayerDef ParentName="SkyrimIslands_SkyLayerBase">
     <defName>SkyrimIslands_SkyLayer</defName>
-    <label>sky</label>
+    <label>平流层</label>
   </PlanetLayerDef>
 
 </Defs>

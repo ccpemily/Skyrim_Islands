@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using RimWorld;
 using RimWorld.Planet;
+using SkyrimIslands.World.Movement;
 using UnityEngine;
 using Verse;
 
-namespace SkyrimIslands.World
+namespace SkyrimIslands.World.Movement
 {
     public class CompSkyIslandMovement : WorldObjectComp
     {
@@ -33,18 +34,73 @@ namespace SkyrimIslands.World
         public bool HasPlannedRoute => waypointPlanner.HasRoute;
 
         public int CurrentGear => currentGear;
-        public bool IsCenteredOnCurrentTile => driver?.GetIsCenteredOnCurrentTile(surfaceProjectionTile) ?? true;
+
+        public bool IsCenteredOnCurrentTile
+        {
+            get
+            {
+                if (driver == null)
+                    return true;
+                Vector3 dir = driver.CurrentDirection;
+                SkyIslandMovementGeometry.EnsureDirection(ref dir, surfaceProjectionTile, parent.Tile);
+                return SkyIslandMovementGeometry.IsCenteredOnTile(parent.Tile, dir);
+            }
+        }
+
         public SkyIslandMapParent.SkyIslandMovementState MovementState => driver?.MovementState ?? SkyIslandMapParent.SkyIslandMovementState.Idle;
         public SkyIslandMapParent.SkyIslandVerticalState VerticalState => driver?.VerticalState ?? SkyIslandMapParent.SkyIslandVerticalState.Holding;
         public bool IsMoveControlLocked => driver?.IsMoveControlLocked ?? false;
-        public bool IsPreparingToDock => driver?.IsPreparingToDock ?? false;
-        public Vector3 CurrentDirection => driver?.CurrentDirection ?? Vector3.zero;
+        public Vector3 CurrentVelocityDirection => driver?.CurrentVelocityDirection ?? Vector3.zero;
         public float CurrentSpeedTilesPerDay => driver?.CurrentSpeedTilesPerDay ?? 0f;
         public int? CurrentEtaTicks => driver?.CalculateEta();
-        public Vector3 CurrentSkyWorldPosition => driver?.GetSkyWorldPosition(surfaceProjectionTile) ?? Vector3.zero;
-        public Vector3 CurrentSurfaceWorldPosition => driver?.GetSurfaceWorldPosition(surfaceProjectionTile) ?? Vector3.zero;
-        public Vector2 CurrentSkyLongLat => driver?.GetSkyLongLat(surfaceProjectionTile) ?? Vector2.zero;
-        public Vector2 CurrentSurfaceLongLat => driver?.GetSurfaceLongLat(surfaceProjectionTile) ?? Vector2.zero;
+
+        public Vector3 CurrentSkyWorldPosition
+        {
+            get
+            {
+                if (driver == null)
+                    return Vector3.zero;
+                Vector3 dir = driver.CurrentDirection;
+                SkyIslandMovementGeometry.EnsureDirection(ref dir, surfaceProjectionTile, parent.Tile);
+                return SkyIslandMovementGeometry.GetSkyWorldPosition(dir, parent.Tile, Owner.Altitude);
+            }
+        }
+
+        public Vector3 CurrentSurfaceWorldPosition
+        {
+            get
+            {
+                if (driver == null)
+                    return Vector3.zero;
+                Vector3 dir = driver.CurrentDirection;
+                SkyIslandMovementGeometry.EnsureDirection(ref dir, surfaceProjectionTile, parent.Tile);
+                return SkyIslandMovementGeometry.GetSurfaceWorldPosition(dir, parent.Tile);
+            }
+        }
+
+        public Vector2 CurrentSkyLongLat
+        {
+            get
+            {
+                if (driver == null)
+                    return Vector2.zero;
+                Vector3 dir = driver.CurrentDirection;
+                SkyIslandMovementGeometry.EnsureDirection(ref dir, surfaceProjectionTile, parent.Tile);
+                return SkyIslandMovementGeometry.GetSkyLongLat(dir, parent.Tile, Owner.Altitude);
+            }
+        }
+
+        public Vector2 CurrentSurfaceLongLat
+        {
+            get
+            {
+                if (driver == null)
+                    return Vector2.zero;
+                Vector3 dir = driver.CurrentDirection;
+                SkyIslandMovementGeometry.EnsureDirection(ref dir, surfaceProjectionTile, parent.Tile);
+                return SkyIslandMovementGeometry.GetSurfaceLongLat(dir, parent.Tile);
+            }
+        }
 
         public override void Initialize(WorldObjectCompProperties props)
         {
@@ -150,7 +206,8 @@ namespace SkyrimIslands.World
                 return;
             }
 
-            surfaceProjectionTile = surfaceLayer.GetClosestTile_NewTemp(parent.Tile, false);
+            Vector3 skyDir = Find.WorldGrid.GetTileCenter(parent.Tile).normalized;
+            surfaceProjectionTile = FindClosestTileOnLayerByDirection(surfaceLayer, skyDir);
         }
 
         public PlanetTile GetSkyProjectionTile(PlanetTile surfaceTile)
@@ -166,7 +223,8 @@ namespace SkyrimIslands.World
                 return PlanetTile.Invalid;
             }
 
-            return skyLayer.GetClosestTile_NewTemp(surfaceTile, false);
+            Vector3 surfaceDir = Find.WorldGrid.GetTileCenter(surfaceTile).normalized;
+            return FindClosestTileOnLayerByDirection(skyLayer, surfaceDir);
         }
 
         public bool CanAddWaypointAt(PlanetTile surfaceTile)
@@ -261,6 +319,31 @@ namespace SkyrimIslands.World
         public void EnsureWaypointProjectionCache()
         {
             waypointPlanner.RebuildSkyWaypoints(GetSkyProjectionTile);
+        }
+
+        private static PlanetTile FindClosestTileOnLayerByDirection(PlanetLayer layer, Vector3 direction)
+        {
+            if (layer == null)
+            {
+                return PlanetTile.Invalid;
+            }
+
+            PlanetTile bestTile = PlanetTile.Invalid;
+            float bestDot = -1f;
+            int layerId = layer.LayerID;
+
+            for (int i = 0; i < layer.TilesCount; i++)
+            {
+                PlanetTile candidate = new PlanetTile(i, layerId);
+                float dot = Vector3.Dot(direction, layer.GetTileCenter(candidate).normalized);
+                if (dot > bestDot)
+                {
+                    bestDot = dot;
+                    bestTile = candidate;
+                }
+            }
+
+            return bestTile;
         }
 
         private void SendArrivalLetter()

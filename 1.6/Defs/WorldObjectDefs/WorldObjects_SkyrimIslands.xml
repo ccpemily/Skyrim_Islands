@@ -8,7 +8,7 @@
     <worldObjectClass>SkyrimIslands.World.SkyIslandMapParent</worldObjectClass>
     <useDynamicDrawer>true</useDynamicDrawer>
     <comps>
-      <li Class="SkyrimIslands.World.CompProperties_SkyIslandMovement" />
+      <li Class="SkyrimIslands.World.Movement.CompProperties_SkyIslandMovement" />
     </comps>
     <expandingIconTexture>World/WorldObjects/Expanding/SettlementPlatform</expandingIconTexture>
     <expandingIconColor>(255,255,255,255)</expandingIconColor>

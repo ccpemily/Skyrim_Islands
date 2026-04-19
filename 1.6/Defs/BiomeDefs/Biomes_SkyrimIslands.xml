@@ -3,8 +3,8 @@
 
   <BiomeDef>
     <defName>SkyrimIslands_SkyBiome</defName>
-    <label>sky island</label>
-    <description>An artificial island floating high above the planet, surrounded by a dense sea of clouds.</description>
+    <label>浮空岛</label>
+    <description>大部分时间被厚重云层环绕的一座人工浮空岛屿。它究竟利用了怎样的反重力技术目前不得而知。</description>
     <workerClass>SkyrimIslands.World.BiomeWorker_SkyIsland</workerClass>
     <generatesNaturally>false</generatesNaturally>
     <canBuildBase>true</canBuildBase>
@@ -35,6 +35,7 @@
     <baseWeatherCommonalities>
       <SkyrimIslands_Clear>18</SkyrimIslands_Clear>
       <SkyrimIslands_Windy>4</SkyrimIslands_Windy>
+      <SkyrimIslands_WindySpecial>1</SkyrimIslands_WindySpecial>
     </baseWeatherCommonalities>
     <diseaseMtbDays>80</diseaseMtbDays>
     <soundsAmbient>

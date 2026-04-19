@@ -1,6 +1,6 @@
 using RimWorld;
 
-namespace SkyrimIslands.World
+namespace SkyrimIslands.World.Movement
 {
     public class CompProperties_SkyIslandMovement : WorldObjectCompProperties
     {

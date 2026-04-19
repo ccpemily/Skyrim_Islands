@@ -3,7 +3,7 @@ using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 
-namespace SkyrimIslands.World
+namespace SkyrimIslands.World.Movement
 {
     public static class SkyIslandMovementRenderUtility
     {

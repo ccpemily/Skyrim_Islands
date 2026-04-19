@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Text;
 using RimWorld;
 using RimWorld.Planet;
+using SkyrimIslands;
 using SkyrimIslands.World;
 using UnityEngine;
 using Verse;
@@ -12,7 +14,6 @@ namespace SkyrimIslands.MainTabs
         private const float BaseVisibleTiles = 3f;
         private const float TilesPerAltitudeUnit = 0.15f;
         private const float MaxTileDrawCount = 600f;
-        private const float PixelTileBaseSize = 5f;
 
         private static SkyIslandMapParent? cachedIsland;
         private static PlanetTile cachedCenterTile = PlanetTile.Invalid;
@@ -59,8 +60,8 @@ namespace SkyrimIslands.MainTabs
                     continue;
                 }
 
-                Color biomeColor = GetBiomeColor(Find.WorldGrid[tile].PrimaryBiome);
-                Widgets.DrawBoxSolid(new Rect(pixelPos.x - tilePixelSize * 0.5f, pixelPos.y - tilePixelSize * 0.5f, tilePixelSize, tilePixelSize), biomeColor);
+                Color tileColor = GetTileColor(tile);
+                Widgets.DrawBoxSolid(new Rect(pixelPos.x - tilePixelSize * 0.5f, pixelPos.y - tilePixelSize * 0.5f, tilePixelSize, tilePixelSize), tileColor);
             }
 
             DrawWorldObjects(rect, island, centerLongLat, cosLat, pixelsPerTile, centerPixel, visibleTileRadius);
@@ -191,6 +192,40 @@ namespace SkyrimIslands.MainTabs
             return $"{wo.LabelCap}\n类型: {wo.def.LabelCap}\n势力: {factionName}";
         }
 
+        private static string GetSkyIslandTooltip(SkyIslandMapParent island)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(island.LabelCap);
+
+            Vector2 longLat = island.CurrentSurfaceLongLat;
+            sb.AppendLine($"位置: {longLat.y:F1}°N, {longLat.x:F1}°E");
+            sb.AppendLine($"高度: {island.Altitude:F0}m");
+
+            float speed = island.CurrentSpeedTilesPerDay;
+            string stateStr = island.MovementState switch
+            {
+                SkyIslandMapParent.SkyIslandMovementState.Idle => "静止",
+                SkyIslandMapParent.SkyIslandMovementState.Accelerating => "加速中",
+                SkyIslandMapParent.SkyIslandMovementState.Cruising => "巡航中",
+                SkyIslandMapParent.SkyIslandMovementState.Decelerating => "减速中",
+                SkyIslandMapParent.SkyIslandMovementState.Braking => "制动中",
+                SkyIslandMapParent.SkyIslandMovementState.Interrupting => "中断中",
+                SkyIslandMapParent.SkyIslandMovementState.Docking => "停靠中",
+                _ => "未知"
+            };
+
+            if (speed < 0.01f)
+            {
+                sb.AppendLine($"状态: {stateStr}");
+            }
+            else
+            {
+                sb.AppendLine($"速度: {speed:F1} 格/天 ({stateStr})");
+            }
+
+            return sb.ToString().TrimEndNewlines();
+        }
+
         private static void DrawAltitudeIndicator(Rect rect, Vector2 centerPixel, float altitude, out Vector2 skyIconPos)
         {
             float t = Mathf.InverseLerp(0f, SkyIslandAltitude.MaxAltitude, altitude);
@@ -233,6 +268,18 @@ namespace SkyrimIslands.MainTabs
             Widgets.DrawLine(tip, wing2, arrowColor, 2f);
         }
 
+        private static Color GetTileColor(PlanetTile tile)
+        {
+            Hilliness hilliness = Find.WorldGrid[tile].hilliness;
+            return hilliness switch
+            {
+                Hilliness.Mountainous => new Color(0.50f, 0.35f, 0.20f),
+                Hilliness.LargeHills => new Color(0.72f, 0.55f, 0.32f),
+                Hilliness.SmallHills => new Color(0.82f, 0.68f, 0.45f),
+                _ => GetBiomeColor(Find.WorldGrid[tile].PrimaryBiome)
+            };
+        }
+
         private static Color GetBiomeColor(BiomeDef biome)
         {
             if (biome == null)
@@ -252,6 +299,10 @@ namespace SkyrimIslands.MainTabs
                 "ExtremeDesert" => new Color(0.88f, 0.68f, 0.36f),
                 "AridShrubland" => new Color(0.68f, 0.58f, 0.32f),
                 "Savanna" => new Color(0.58f, 0.68f, 0.28f),
+                "TemperateSwamp" => new Color(0.24f, 0.44f, 0.22f),
+                "ColdBog" => new Color(0.20f, 0.38f, 0.28f),
+                "TropicalSwamp" => new Color(0.18f, 0.42f, 0.18f),
+                "Grasslands" => new Color(0.52f, 0.68f, 0.22f),
                 "Ocean" => new Color(0.18f, 0.32f, 0.52f),
                 "Lake" => new Color(0.28f, 0.44f, 0.62f),
                 _ => GenerateStableColor(name)

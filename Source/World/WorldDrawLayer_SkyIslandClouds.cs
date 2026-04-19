@@ -10,7 +10,7 @@ namespace SkyrimIslands.World
     {
         private const int SubdivisionsCount = 4;
         private const float CloudAltitudeOffset = -0.8f;
-        private const float CloudTimeSpeed = 2f;
+        private const float CloudTimeSpeed = 1f;
         private const float OpacityChangeTime = 0.15f;
 
         private Material? material;

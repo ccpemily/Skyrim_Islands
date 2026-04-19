@@ -6,7 +6,7 @@ using UnityEngine;
 using Verse;
 using Verse.Sound;
 
-namespace SkyrimIslands.World
+namespace SkyrimIslands.World.Movement
 {
     public class GameComponent_SkyIslandMovement : GameComponent
     {

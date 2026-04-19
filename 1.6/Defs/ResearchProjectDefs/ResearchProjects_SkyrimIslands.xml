@@ -57,7 +57,7 @@
 
   <ResearchProjectDef Class="SkyrimIslands.Research.SkyIslandResearchProjectDef">
     <defName>SkyrimIslands_SpireTech_3</defName>
-    <label>【尖塔】主控核心重启</label>
+    <label>重启核心主控</label>
     <description>尖塔完整重启后的最终示例科技。它代表尖塔路线已经完成当前骨架的闭环，也为后续更高层级功能预留了稳定入口。</description>
     <baseCost>30</baseCost>
     <prerequisites>

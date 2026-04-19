@@ -1,4 +1,4 @@
-namespace SkyrimIslands.World
+namespace SkyrimIslands.World.Movement
 {
     public static class SkyIslandMovementConstants
     {
@@ -9,13 +9,14 @@ namespace SkyrimIslands.World
         public const float VerticalSpeedKmPerHour = 1f;
         public const float DockDistanceThreshold = 1f;
         public const float DockDurationHours = 2f;
+        public const float BrakeAccelerationTilesPerHourSq = 20f;
 
         public static readonly GearProfile[] Gears = new GearProfile[]
         {
-            new GearProfile(2f, 1f),
-            new GearProfile(5f, 1.5f),
-            new GearProfile(10f, 2f),
-            new GearProfile(20f, 3f)
+            new GearProfile(2f, 2f),
+            new GearProfile(5f, 3f),
+            new GearProfile(10f, 4f),
+            new GearProfile(20f, 6f)
         };
     }
 

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using RimWorld;
 using RimWorld.Planet;
 using SkyrimIslands.World;
+using SkyrimIslands.World.Movement;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
@@ -22,13 +23,13 @@ namespace SkyrimIslands.MainTabs
         private bool isDraggingMinimap;
         private static SkyIslandTab curTab = SkyIslandTab.Overview;
 
-        public override Vector2 InitialSize => new Vector2((float)UI.screenWidth, 620f);
+        public override Vector2 InitialSize => new Vector2((float)UI.screenWidth * 0.9f, 620f);
 
         public Window_SkyIslandControl()
         {
             layer = WindowLayer.GameUI;
             closeOnCancel = true;
-            closeOnClickedOutside = false;
+            closeOnClickedOutside = true;
             draggable = false;
             resizeable = false;
             preventCameraMotion = false;
@@ -64,12 +65,12 @@ namespace SkyrimIslands.MainTabs
             }
 
             const float barWidth = 28f;
-            float leftWidth = Mathf.Max(270f, rect.width * 0.22f);
+            float leftWidth = Mathf.Max(270f, Mathf.Round(rect.width * 0.22f));
             Rect barRect = new Rect(rect.x, rect.y, barWidth, rect.height);
             Rect leftRect = new Rect(rect.x + barWidth, rect.y, leftWidth, rect.height);
 
             const float tabHeight = 32f;
-            Rect rightRect = new Rect(leftRect.xMax + 10f, rect.y, rect.width - leftRect.width - barWidth - 10f, rect.height);
+            Rect rightRect = new Rect(Mathf.Round(leftRect.xMax + 10f), rect.y, Mathf.Round(rect.width - leftWidth - barWidth - 10f), rect.height);
             Rect menuRect = rightRect;
             menuRect.yMin += tabHeight;
             Widgets.DrawMenuSection(menuRect);
@@ -205,25 +206,23 @@ namespace SkyrimIslands.MainTabs
 
         private void DrawMovementPage(Rect rect, SkyIslandMapParent island)
         {
-            Text.Font = GameFont.Small;
-            Widgets.Label(new Rect(rect.x, rect.y, rect.width, 28f), "移动状态");
-
-            const float minimapSize = 260f;
+            float minimapSize = Mathf.Min(rect.width / 2f - 10f, rect.height - 68f);
+            float minimapY = rect.y + (rect.height - minimapSize) * 0.5f;
             const float gearBarHeight = 32f;
             float rightColumnX = rect.x + minimapSize + 20f;
             float rightColumnWidth = rect.width - minimapSize - 20f;
 
-            Rect minimapRect = new Rect(rect.x, rect.y + 34f, minimapSize, minimapSize);
+            Rect minimapRect = new Rect(rect.x, minimapY, minimapSize, minimapSize);
             HandleMinimapInput(minimapRect);
             SkyIslandMinimapUtility.DrawMinimap(minimapRect, island);
             DrawMinimapResetButton(minimapRect);
 
-            Rect gearBarRect = new Rect(rect.x, minimapRect.yMax + 10f, minimapSize, gearBarHeight);
+            DrawMovementButtons(new Rect(rightColumnX, rect.y + 34f, rightColumnWidth, 36f), island);
+
+            Rect gearBarRect = new Rect(rightColumnX, rect.y + 34f + 36f + 10f, rightColumnWidth, gearBarHeight);
             DrawGearBar(gearBarRect, island);
 
-            DrawMovementButtons(new Rect(rightColumnX, rect.y + 34f, rightColumnWidth, 72f), island);
-
-            float infoY = rect.y + 118f;
+            float infoY = gearBarRect.yMax + 14f;
             Widgets.Label(new Rect(rightColumnX, infoY, rightColumnWidth, 24f), "当前位置: " + FormatCoordinates(island.CurrentSurfaceLongLat));
             Widgets.Label(new Rect(rightColumnX, infoY + 24f, rightColumnWidth, 24f), "当前状态: " + GetMovementStateLabel(island));
             Widgets.Label(new Rect(rightColumnX, infoY + 48f, rightColumnWidth, 24f), "待执行路径点数量: " + island.PlannedSurfaceWaypoints.Count);
@@ -233,8 +232,8 @@ namespace SkyrimIslands.MainTabs
                 : "无";
             Widgets.Label(new Rect(rightColumnX, infoY + 72f, rightColumnWidth, 24f), "下一路径点: " + nextWaypoint);
 
-            float routeY = Mathf.Max(infoY + 110f, gearBarRect.yMax + 14f);
-            Rect routeRect = new Rect(rect.x, routeY, rect.width, rect.height - routeY);
+            float routeY = infoY + 110f;
+            Rect routeRect = new Rect(rightColumnX, routeY, rightColumnWidth, rect.height - routeY);
             DrawRoutePanel(routeRect, island);
         }
 
@@ -276,6 +275,7 @@ namespace SkyrimIslands.MainTabs
                 SkyIslandMapParent.SkyIslandMovementState.Accelerating => "加速中",
                 SkyIslandMapParent.SkyIslandMovementState.Cruising => "巡航中",
                 SkyIslandMapParent.SkyIslandMovementState.Decelerating => "减速中",
+                SkyIslandMapParent.SkyIslandMovementState.Braking => "制动中",
                 SkyIslandMapParent.SkyIslandMovementState.Docking => "泊入中",
                 SkyIslandMapParent.SkyIslandMovementState.Interrupting => "中断回锚中",
                 _ => "未知"
@@ -300,11 +300,16 @@ namespace SkyrimIslands.MainTabs
             bool isIdle = island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Idle;
             string[] gearLabels = { "前进一", "前进二", "前进三", "前进四" };
 
+            float lineCenterY = rect.center.y;
+            float lineHalfHeight = rect.height * 0.28f;
+            float lineTop = lineCenterY - lineHalfHeight;
+            float lineBottom = lineCenterY + lineHalfHeight;
+
             for (int i = 0; i < 5; i++)
             {
                 bool isInterrupt = i == 0;
                 bool isSelected = isInterrupt
-                    ? isIdle
+                    ? (isIdle || island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Interrupting)
                     : (!isIdle && island.CurrentGear == i - 1);
 
                 bool canInteract;
@@ -313,7 +318,7 @@ namespace SkyrimIslands.MainTabs
                     canInteract = island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Accelerating ||
                                   island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Cruising ||
                                   island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Decelerating ||
-                                  island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Docking;
+                                  island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Braking;
                 }
                 else
                 {
@@ -332,19 +337,17 @@ namespace SkyrimIslands.MainTabs
                     lineColor = isSelected
                         ? new Color(1f, 0.15f, 0.15f, 1f)
                         : new Color(0.8f, 0.1f, 0.1f, canInteract ? 0.85f : 0.35f);
-                    lineThickness = isSelected ? 5f : 3f;
+                    lineThickness = isSelected ? 4f : 2f;
                 }
                 else
                 {
                     lineColor = isSelected
-                        ? new Color(1f, 1f, 1f, 1f)
+                        ? new Color(0.25f, 1f, 0.4f, 1f)
                         : new Color(0.75f, 0.75f, 0.75f, canInteract ? 0.85f : 0.35f);
                     lineThickness = isSelected ? 4f : 2f;
                 }
 
                 float centerX = segRect.center.x;
-                float lineTop = segRect.y + segRect.height * 0.22f;
-                float lineBottom = segRect.y + segRect.height * 0.78f;
 
                 Widgets.DrawLine(
                     new Vector2(centerX, lineTop),
@@ -364,16 +367,62 @@ namespace SkyrimIslands.MainTabs
                 {
                     if (isInterrupt)
                     {
-                        bool changed = island.PauseMovementPreview();
-                        if (changed)
-                        {
-                            SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
-                        }
+                        Find.WindowStack.Add(new Dialog_MessageBox(
+                            "确认要中断当前移动吗？空岛将制动减速，随后飘向最近的锚定点停止。",
+                            "确认",
+                            delegate
+                            {
+                                bool changed = island.PauseMovementPreview();
+                                if (changed)
+                                {
+                                    SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+                                }
+                            },
+                            "取消",
+                            null,
+                            title: "中断移动"));
                     }
                     else
                     {
-                        island.SetGear(i - 1);
-                        SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+                        int newGear = i - 1;
+                        if (isIdle && !island.HasPlannedRoute)
+                        {
+                            Messages.Message("没有规划任何路线。", island, MessageTypeDefOf.RejectInput);
+                        }
+                        else if (isIdle && island.HasPlannedRoute)
+                        {
+                            string targetLabel = gearLabels[newGear];
+                            Find.WindowStack.Add(new Dialog_MessageBox(
+                                $"确认要切换到 {targetLabel} 吗？",
+                                "确认",
+                                delegate
+                                {
+                                    island.SetGear(newGear);
+                                    if (island.StartEnginePreview())
+                                    {
+                                        Messages.Message("空岛移动已启动。", island, MessageTypeDefOf.NeutralEvent);
+                                        SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+                                    }
+                                },
+                                "取消",
+                                null,
+                                title: "切换档位"));
+                        }
+                        else
+                        {
+                            string targetLabel = gearLabels[newGear];
+                            Find.WindowStack.Add(new Dialog_MessageBox(
+                                $"确认要切换到 {targetLabel} 吗？",
+                                "确认",
+                                delegate
+                                {
+                                    island.SetGear(newGear);
+                                    SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+                                },
+                                "取消",
+                                null,
+                                title: "切换档位"));
+                        }
                     }
                     Event.current.Use();
                 }
@@ -386,7 +435,6 @@ namespace SkyrimIslands.MainTabs
             float buttonHeight = 30f;
             Rect topLeft = new Rect(rect.x, rect.y, buttonWidth, buttonHeight);
             Rect topRight = new Rect(topLeft.xMax + 12f, rect.y, buttonWidth, buttonHeight);
-            Rect bottomLeft = new Rect(rect.x, rect.y + buttonHeight + 10f, buttonWidth, buttonHeight);
 
             GameComponent_SkyIslandMovement? movement = Current.Game?.GetComponent<GameComponent_SkyIslandMovement>();
             bool controlsLocked = island.IsMoveControlLocked;
@@ -415,21 +463,6 @@ namespace SkyrimIslands.MainTabs
                 {
                     island.ClearPlannedSurfaceWaypoints();
                     SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
-                }
-            }
-            GUI.color = Color.white;
-
-            bool canStartEngine = island.HasPlannedRoute && island.MovementState == SkyIslandMapParent.SkyIslandMovementState.Idle;
-            if (!canStartEngine)
-            {
-                GUI.color = Color.gray;
-            }
-            if (Widgets.ButtonText(bottomLeft, "启动引擎") && canStartEngine)
-            {
-                if (island.StartEnginePreview())
-                {
-                    Messages.Message("空岛测试移动已启动。当前版本使用固定速度进行点到点移动。", island, MessageTypeDefOf.NeutralEvent);
-                    SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
                 }
             }
             GUI.color = Color.white;

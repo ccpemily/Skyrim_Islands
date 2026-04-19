@@ -10,7 +10,7 @@ Thinking过程请使用中文。
 ## 构建、运行与调试
 
 - **还原依赖：** `dotnet restore .\Skyrim_Islands.csproj`
-- **构建：** `dotnet build .\Skyrim_Islands.csproj -c Debug --no-restore`
+- **构建：** `dotnet build "D:/RimWorld_devmode/Mods/Skyrim_Islands/Skyrim_Islands.csproj" -c Debug --no-restore`（当前环境 bash 对相对路径解析异常，请使用绝对路径）
 - **VS Code 任务：** 按 `Ctrl+Shift+B` 运行默认的 `build mod` 任务；`launch RimWorld` 会先构建再启动 RimWorld 开发版。
 - **输出位置：** `1.6/Assemblies/Skyrim_Islands.dll` 和 `.pdb`
 - **调试流程：** 项目使用 Unity Player 调试。先启动 RimWorld，然后在 VS Code 中使用 `Attach Unity Debugger`（或 `Ctrl+Shift+P → Attach Unity Debugger`）并选择正在运行的 `RimWorld player`。Unity 调试端口是动态的。

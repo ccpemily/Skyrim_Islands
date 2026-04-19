@@ -2,6 +2,7 @@ using HarmonyLib;
 using RimWorld;
 using RimWorld.Planet;
 using SkyrimIslands.World;
+using SkyrimIslands.World.Movement;
 using Verse;
 
 namespace SkyrimIslands.Patches

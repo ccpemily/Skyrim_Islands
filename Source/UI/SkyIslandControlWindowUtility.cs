@@ -1,5 +1,6 @@
 using RimWorld;
 using SkyrimIslands.World;
+using SkyrimIslands.World.Movement;
 using Verse;
 
 namespace SkyrimIslands.MainTabs

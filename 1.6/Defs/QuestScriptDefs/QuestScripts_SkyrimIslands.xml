@@ -3,12 +3,12 @@
 
   <QuestScriptDef>
     <defName>SkyrimIslands_MigrationQuest</defName>
-    <label>空岛启程</label>
+    <label>神秘穿梭机</label>
     <rootSelectionWeight>0</rootSelectionWeight>
     <isRootSpecial>true</isRootSpecial>
     <autoAccept>false</autoAccept>
     <hideOnCleanup>true</hideOnCleanup>
-    <questAvailableLetterLabel>空岛启程</questAvailableLetterLabel>
+    <questAvailableLetterLabel>神秘穿梭机</questAvailableLetterLabel>
     <questAvailableLetterTextIsDescription>true</questAvailableLetterTextIsDescription>
     <sendAvailableLetter>false</sendAvailableLetter>
     <endOnColonyMove>false</endOnColonyMove>
@@ -17,12 +17,12 @@
 
   <QuestScriptDef>
     <defName>SkyrimIslands_SpireRecoveryQuest</defName>
-    <label>尖塔苏醒</label>
+    <label>尖塔调查</label>
     <rootSelectionWeight>0</rootSelectionWeight>
     <isRootSpecial>true</isRootSpecial>
     <autoAccept>false</autoAccept>
     <hideOnCleanup>true</hideOnCleanup>
-    <questAvailableLetterLabel>尖塔苏醒</questAvailableLetterLabel>
+    <questAvailableLetterLabel>尖塔调查</questAvailableLetterLabel>
     <questAvailableLetterTextIsDescription>true</questAvailableLetterTextIsDescription>
     <sendAvailableLetter>false</sendAvailableLetter>
     <endOnColonyMove>false</endOnColonyMove>

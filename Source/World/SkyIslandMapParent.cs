@@ -1,5 +1,6 @@
 using RimWorld;
 using RimWorld.Planet;
+using SkyrimIslands.World.Movement;
 using UnityEngine;
 using Verse;
 
@@ -13,6 +14,7 @@ namespace SkyrimIslands.World
             Accelerating,
             Cruising,
             Decelerating,
+            Braking,
             Interrupting,
             Docking
         }
@@ -61,10 +63,9 @@ namespace SkyrimIslands.World
         public SkyIslandVerticalState VerticalState => MovementComp.VerticalState;
         public int CurrentGear => MovementComp.CurrentGear;
         public bool IsMoveControlLocked => MovementComp.IsMoveControlLocked;
-        public bool IsPreparingToDock => MovementComp.IsPreparingToDock;
         public float CurrentSpeedTilesPerDay => MovementComp.CurrentSpeedTilesPerDay;
         public int? CurrentEtaTicks => MovementComp.CurrentEtaTicks;
-        public Vector3 CurrentDirection => MovementComp.CurrentDirection;
+        public Vector3 CurrentVelocityDirection => MovementComp.CurrentVelocityDirection;
         public Vector3 CurrentSkyWorldPosition => MovementComp.CurrentSkyWorldPosition;
         public Vector3 CurrentSurfaceWorldPosition => MovementComp.CurrentSurfaceWorldPosition;
         public Vector2 CurrentSkyLongLat => MovementComp.CurrentSkyLongLat;

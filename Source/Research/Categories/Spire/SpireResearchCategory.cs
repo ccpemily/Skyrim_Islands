@@ -45,7 +45,7 @@ namespace SkyrimIslands.Research.Categories.Spire
 
         public void MigrateFromLegacy(
             int oldInitialSpireQuestCreateTick,
-            Quest oldActiveSpireQuest,
+            Quest? oldActiveSpireQuest,
             int oldActiveSpireQuestStage,
             int oldRevealedSpireResearchStage,
             bool oldBootstrapInvestigationFinished,
